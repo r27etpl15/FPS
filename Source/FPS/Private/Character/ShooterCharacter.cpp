@@ -4,6 +4,7 @@
 #include "Character/ShooterCharacter.h"
 
 #include "Camera/CameraComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 
 AShooterCharacter::AShooterCharacter()
@@ -33,6 +34,8 @@ AShooterCharacter::AShooterCharacter()
 	GetMesh()->bOnlyOwnerSee = false;
 	GetMesh()->bOwnerNoSee = true;
 	GetMesh()->bReceivesDecals = false;
+	
+	GetCharacterMovement()->MovementState.bCanCrouch = true;
 }
 
 void AShooterCharacter::BeginPlay()
