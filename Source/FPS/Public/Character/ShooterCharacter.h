@@ -6,6 +6,8 @@
 #include "GameFramework/Character.h"
 #include "ShooterCharacter.generated.h"
 
+class UInputAction;
+class UCombatComponent;
 class UCameraComponent;
 class USpringArmComponent;
 
@@ -24,6 +26,16 @@ protected:
 	virtual void BeginPlay() override;
 	
 private:
+	void InputCycleWeapon();
+	void InputReloadWeapon();
+	void InputFireWeaponPressed();
+	void InputFireWeaponReleased();
+	void InputAimPressed();
+	void InputAimReleased();
+	
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<UCombatComponent> CombatComponent;
+	
 	// 第一人称视角
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<USkeletalMeshComponent> Mesh1P;
@@ -33,4 +45,17 @@ private:
 	
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<UCameraComponent> FirstPersonCamera;
+	
+	// 输入
+	UPROPERTY(EditAnywhere, Category="FPS|Input")
+	TObjectPtr<UInputAction> CycleWeaponAction;
+	
+	UPROPERTY(EditAnywhere, Category="FPS|Input")
+	TObjectPtr<UInputAction> FireWeaponAction;
+	
+	UPROPERTY(EditAnywhere, Category="FPS|Input")
+	TObjectPtr<UInputAction> ReloadWeaponAction;
+	
+	UPROPERTY(EditAnywhere, Category="FPS|Input")
+	TObjectPtr<UInputAction> AimWeaponAction;
 };
