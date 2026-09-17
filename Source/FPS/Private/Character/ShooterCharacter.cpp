@@ -71,11 +71,31 @@ void AShooterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	ShooterInputComponent->BindAction(ReloadWeaponAction, ETriggerEvent::Started, this, &ThisClass::InputReloadWeapon);
 }
 
+void AShooterCharacter::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+	
+	if (IsValid(CombatComponent))
+	{
+		CombatComponent->SpawnInventory();
+	}
+}
+
 FName AShooterCharacter::GetWeaponAttachPoint_Implementation(const FGameplayTag& WeaponTypeTag) const
 {
 	checkf(CombatComponent->WeaponData, TEXT("没有Weapon Data Asset，请在角色类里面填写"));
 	
 	return CombatComponent->WeaponData->GetGripPoints().FindChecked(WeaponTypeTag);
+}
+
+USkeletalMeshComponent* AShooterCharacter::GetMesh1P_Implementation() const
+{
+	return Mesh1P;
+}
+
+USkeletalMeshComponent* AShooterCharacter::GetMesh3P_Implementation() const
+{
+	return GetMesh();
 }
 
 void AShooterCharacter::InputCycleWeapon()

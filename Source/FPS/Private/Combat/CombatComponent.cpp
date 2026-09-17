@@ -3,6 +3,8 @@
 
 #include "Combat/CombatComponent.h"
 
+#include "Weapon/Weapon.h"
+
 
 UCombatComponent::UCombatComponent()
 {
@@ -53,5 +55,35 @@ void UCombatComponent::InitiateAimPressed()
 void UCombatComponent::InitiateAimReleased()
 {
 	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, TEXT("AimReleased"));
+}
+
+void UCombatComponent::SpawnInventory()
+{
+	AWeapon* NewWeapon = SpawnWeapon(DefaultWeaponClass);
+	
+	if (IsValid(NewWeapon))
+	{
+		NewWeapon->AttachToOwningPawn();
+	}
+}
+
+void UCombatComponent::DestroyInventory()
+{
+	// TODO: 如果存在则销毁背包
+}
+
+AWeapon* UCombatComponent::SpawnWeapon(TSubclassOf<AWeapon> WeaponClass) const
+{
+	AActor* OwningActor = GetOwner();
+	
+	if (!IsValid(OwningActor)) { return nullptr;}
+	if (OwningActor->GetLocalRole() < ROLE_Authority) { return nullptr; }
+	
+	FActorSpawnParameters SpawnParameters;
+	SpawnParameters.Instigator = Cast<APawn>(OwningActor);
+	SpawnParameters.Owner = OwningActor;
+	SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+	
+	return GetWorld()->SpawnActor<AWeapon>(WeaponClass, SpawnParameters);
 }
 

@@ -21,8 +21,13 @@ class FPS_API IPlayerInterface
 {
 	GENERATED_BODY()
 
-	
 public:
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	FName GetWeaponAttachPoint(const FGameplayTag& WeaponTypeTag) const;
+	
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+	USkeletalMeshComponent* GetMesh1P() const;
+	
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+	USkeletalMeshComponent* GetMesh3P() const;
 };

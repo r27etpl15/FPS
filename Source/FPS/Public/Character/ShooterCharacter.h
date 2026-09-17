@@ -22,9 +22,12 @@ public:
 	
 	virtual void Tick(float DeltaTime) override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	virtual void PossessedBy(AController* NewController) override;
 	
 	//~ Begin UPlayerInterface Interface
 	virtual FName GetWeaponAttachPoint_Implementation(const FGameplayTag& WeaponTypeTag) const override;
+	virtual USkeletalMeshComponent* GetMesh1P_Implementation() const override;
+	virtual USkeletalMeshComponent* GetMesh3P_Implementation() const override;
 	//~ End UPlayerInterface Interface
 
 protected:

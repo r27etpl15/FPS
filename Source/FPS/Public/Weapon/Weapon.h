@@ -14,6 +14,8 @@ class FPS_API AWeapon : public AActor
 
 public:
 	AWeapon();
+	
+	virtual void OnRep_Instigator() override;
 
 protected:
 	virtual void BeginPlay() override;
@@ -25,6 +27,8 @@ public:
 	USkeletalMeshComponent* GetMesh1P() const { return Mesh1P; }
 	USkeletalMeshComponent* GetMesh3P() const { return Mesh3P; }
 	
+	void AttachToOwningPawn() const;
+	
 private:
 	// 面相第一人称
 	UPROPERTY(VisibleAnywhere)
@@ -33,4 +37,6 @@ private:
 	// 面相第三人称
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<USkeletalMeshComponent> Mesh3P;
+	
+	void SetMeshVisibilities(APawn* OwningPawn) const;
 };
