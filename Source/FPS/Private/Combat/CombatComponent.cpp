@@ -3,6 +3,7 @@
 
 #include "Combat/CombatComponent.h"
 
+#include "Net/UnrealNetwork.h"
 #include "Weapon/Weapon.h"
 
 
@@ -25,6 +26,14 @@ void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 
+}
+
+void UCombatComponent::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	
+	DOREPLIFETIME(ThisClass, Inventory);
+	DOREPLIFETIME(ThisClass, CurrentWeapon);
 }
 
 void UCombatComponent::InitiateCycleWeapon()
@@ -59,17 +68,35 @@ void UCombatComponent::InitiateAimReleased()
 
 void UCombatComponent::SpawnInventory()
 {
-	AWeapon* NewWeapon = SpawnWeapon(DefaultWeaponClass);
+	if (!GetOwner()->HasAuthority()) { return; }
 	
-	if (IsValid(NewWeapon))
+	for (const TSubclassOf<AWeapon>& WeaponClass : DefaultWeaponClass)
 	{
-		NewWeapon->AttachToOwningPawn();
+		AWeapon* Weapon = SpawnWeapon(WeaponClass);
+		Inventory.AddUnique(Weapon);
+	}
+	
+	if (Inventory.Num() > 0)
+	{
+		EquipWeapon(Inventory[0]);
 	}
 }
 
 void UCombatComponent::DestroyInventory()
 {
-	// TODO: 如果存在则销毁背包
+	for (TObjectPtr<AWeapon> Weapon : Inventory)
+	{
+		if (IsValid(Weapon))
+		{
+			Weapon->Destroy();
+		}
+	}
+}
+
+void UCombatComponent::EquipWeapon(AWeapon* InWeapon)
+{
+	CurrentWeapon = InWeapon;
+	CurrentWeapon->AttachToOwningPawn();
 }
 
 AWeapon* UCombatComponent::SpawnWeapon(TSubclassOf<AWeapon> WeaponClass) const
@@ -77,7 +104,7 @@ AWeapon* UCombatComponent::SpawnWeapon(TSubclassOf<AWeapon> WeaponClass) const
 	AActor* OwningActor = GetOwner();
 	
 	if (!IsValid(OwningActor)) { return nullptr;}
-	if (OwningActor->GetLocalRole() < ROLE_Authority) { return nullptr; }
+	if (!OwningActor->HasAuthority()) { return nullptr; }
 	
 	FActorSpawnParameters SpawnParameters;
 	SpawnParameters.Instigator = Cast<APawn>(OwningActor);
@@ -87,3 +114,9 @@ AWeapon* UCombatComponent::SpawnWeapon(TSubclassOf<AWeapon> WeaponClass) const
 	return GetWorld()->SpawnActor<AWeapon>(WeaponClass, SpawnParameters);
 }
 
+void UCombatComponent::OnRep_CurrentWeapon(AWeapon* LastWeapon)
+{
+	if (!IsValid(CurrentWeapon)) { return; }
+	
+	CurrentWeapon->AttachToOwningPawn();
+}

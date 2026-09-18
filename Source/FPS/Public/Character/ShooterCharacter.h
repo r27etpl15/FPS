@@ -32,6 +32,10 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void BeginDestroy() override;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="FPS|Combat")
+	TObjectPtr<UCombatComponent> CombatComponent;
 	
 private:
 	void InputCycleWeapon();
@@ -40,9 +44,6 @@ private:
 	void InputFireWeaponReleased();
 	void InputAimPressed();
 	void InputAimReleased();
-	
-	UPROPERTY(VisibleAnywhere)
-	TObjectPtr<UCombatComponent> CombatComponent;
 	
 	// 第一人称视角
 	UPROPERTY(VisibleAnywhere)

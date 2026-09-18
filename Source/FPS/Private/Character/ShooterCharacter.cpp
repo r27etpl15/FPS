@@ -38,6 +38,7 @@ AShooterCharacter::AShooterCharacter()
 	GetMesh()->bOnlyOwnerSee = false;
 	GetMesh()->bOwnerNoSee = true;
 	GetMesh()->bReceivesDecals = false;
+	GetMesh()->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered;
 	
 	GetCharacterMovement()->MovementState.bCanCrouch = true;
 	
@@ -49,6 +50,16 @@ void AShooterCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	
+}
+
+void AShooterCharacter::BeginDestroy()
+{
+	Super::BeginDestroy();
+	
+	if (CombatComponent)
+	{
+		CombatComponent->DestroyInventory();	
+	}
 }
 
 void AShooterCharacter::Tick(float DeltaTime)

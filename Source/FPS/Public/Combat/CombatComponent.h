@@ -17,12 +17,9 @@ class FPS_API UCombatComponent : public UActorComponent
 
 public:
 	UCombatComponent();
-
-protected:
-	virtual void BeginPlay() override;
-
-public:
+	
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 	
 	// 切换下一把武器
 	void InitiateCycleWeapon();
@@ -32,15 +29,29 @@ public:
 	void InitiateAimPressed();
 	void InitiateAimReleased();
 	
-	UPROPERTY(EditDefaultsOnly, Category="FPS|Weapon")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="FPS|Weapon")
 	TObjectPtr<UWeaponData> WeaponData;
 	
 	void SpawnInventory();
 	void DestroyInventory();
 	
+	void EquipWeapon(AWeapon* InWeapon);
+	
+protected:
+	virtual void BeginPlay() override;
+	
+	UPROPERTY(Transient, BlueprintReadOnly, ReplicatedUsing=OnRep_CurrentWeapon)
+	TObjectPtr<AWeapon> CurrentWeapon;
+	
 private:
+	UPROPERTY(Transient, Replicated)
+	TArray<TObjectPtr<AWeapon>> Inventory;
+	
 	UPROPERTY(EditDefaultsOnly, Category="FPS|Weapon")
-	TSubclassOf<AWeapon> DefaultWeaponClass;
+	TArray<TSubclassOf<AWeapon>> DefaultWeaponClass;
+	
+	UFUNCTION()
+	void OnRep_CurrentWeapon(AWeapon* LastWeapon);
 	
 	AWeapon* SpawnWeapon(TSubclassOf<AWeapon> WeaponClass) const;
 };

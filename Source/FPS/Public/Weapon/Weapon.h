@@ -15,19 +15,19 @@ class FPS_API AWeapon : public AActor
 public:
 	AWeapon();
 	
+	FGameplayTag GetWeaponTypeTag() const { return WeaponTypeTag; }
+	USkeletalMeshComponent* GetMesh1P() const { return Mesh1P; }
+	USkeletalMeshComponent* GetMesh3P() const { return Mesh3P; }
+	
 	virtual void OnRep_Instigator() override;
+	
+	void AttachToOwningPawn() const;
 
 protected:
 	virtual void BeginPlay() override;
 	
-	UPROPERTY(EditAnywhere, Category="FPS|WeaponType")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FPS|WeaponType")
 	FGameplayTag WeaponTypeTag;
-
-public:
-	USkeletalMeshComponent* GetMesh1P() const { return Mesh1P; }
-	USkeletalMeshComponent* GetMesh3P() const { return Mesh3P; }
-	
-	void AttachToOwningPawn() const;
 	
 private:
 	// 面相第一人称
