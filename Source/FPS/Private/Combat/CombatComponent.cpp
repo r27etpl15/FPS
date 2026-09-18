@@ -10,22 +10,17 @@
 UCombatComponent::UCombatComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
-	
 }
 
 void UCombatComponent::BeginPlay()
 {
 	Super::BeginPlay();
-	
-	
 }
 
 void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType,
                                      FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
-
 }
 
 void UCombatComponent::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
@@ -34,6 +29,7 @@ void UCombatComponent::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty
 	
 	DOREPLIFETIME(ThisClass, Inventory);
 	DOREPLIFETIME(ThisClass, CurrentWeapon);
+	DOREPLIFETIME_CONDITION(ThisClass, bAiming, COND_SkipOwner);
 }
 
 void UCombatComponent::InitiateCycleWeapon()
@@ -58,12 +54,19 @@ void UCombatComponent::InitiateReloadWeapon()
 
 void UCombatComponent::InitiateAimPressed()
 {
-	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, TEXT("AimPressed"));
+	SetAiming(true);
+	Server_Aim(bAiming);
 }
 
 void UCombatComponent::InitiateAimReleased()
 {
-	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, TEXT("AimReleased"));
+	SetAiming(false);
+	Server_Aim(bAiming);
+}
+
+void UCombatComponent::Server_Aim_Implementation(bool bPressed)
+{
+	SetAiming(bPressed);
 }
 
 void UCombatComponent::SpawnInventory()

@@ -34,14 +34,13 @@ public:
 	
 	void SpawnInventory();
 	void DestroyInventory();
-	
 	void EquipWeapon(AWeapon* InWeapon);
+	
+	bool IsAiming() const { return bAiming; }
+	void SetAiming(bool bPressed) { bAiming = bPressed; }
 	
 protected:
 	virtual void BeginPlay() override;
-	
-	UPROPERTY(Transient, BlueprintReadOnly, ReplicatedUsing=OnRep_CurrentWeapon)
-	TObjectPtr<AWeapon> CurrentWeapon;
 	
 private:
 	UPROPERTY(Transient, Replicated)
@@ -50,8 +49,17 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category="FPS|Weapon")
 	TArray<TSubclassOf<AWeapon>> DefaultWeaponClass;
 	
+	UPROPERTY(Transient, BlueprintReadOnly, ReplicatedUsing=OnRep_CurrentWeapon, meta=(AllowPrivateAccess = "true"))
+	TObjectPtr<AWeapon> CurrentWeapon;
+	
+	UPROPERTY(BlueprintReadOnly, Replicated, meta=(AllowPrivateAccess = "true"))
+	bool bAiming;
+	
 	UFUNCTION()
 	void OnRep_CurrentWeapon(AWeapon* LastWeapon);
 	
 	AWeapon* SpawnWeapon(TSubclassOf<AWeapon> WeaponClass) const;
+	
+	UFUNCTION(Server, Reliable)
+	void Server_Aim(bool bPressed);
 };

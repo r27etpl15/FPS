@@ -26,9 +26,6 @@ public:
 protected:
 	virtual void BeginPlay() override;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FPS|WeaponType")
-	FGameplayTag WeaponTypeTag;
-	
 private:
 	// 面相第一人称
 	UPROPERTY(VisibleAnywhere)
@@ -37,6 +34,12 @@ private:
 	// 面相第三人称
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<USkeletalMeshComponent> Mesh3P;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FPS|WeaponType", meta=(AllowPrivateAccess = "true"))
+	FGameplayTag WeaponTypeTag;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="FPS|Aiming", meta=(AllowPrivateAccess = "true"))
+	float AimFOV;
 	
 	void SetMeshVisibilities(APawn* OwningPawn) const;
 };

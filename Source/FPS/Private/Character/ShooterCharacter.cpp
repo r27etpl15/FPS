@@ -44,12 +44,15 @@ AShooterCharacter::AShooterCharacter()
 	
 	CombatComponent = CreateDefaultSubobject<UCombatComponent>(TEXT("CombatComponent"));
 	CombatComponent->SetIsReplicated(true);
+	
+	DefaultFOV = 90.0f;
 }
 
 void AShooterCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	FirstPersonCamera->SetFieldOfView(DefaultFOV);
 }
 
 void AShooterCharacter::BeginDestroy()
@@ -132,9 +135,11 @@ void AShooterCharacter::InputFireWeaponReleased()
 void AShooterCharacter::InputAimPressed()
 {
 	CombatComponent->InitiateAimPressed();
+	OnAim(true);
 }
 
 void AShooterCharacter::InputAimReleased()
 {
 	CombatComponent->InitiateAimReleased();
+	OnAim(false);
 }
