@@ -38,6 +38,7 @@ public:
 	
 	bool IsAiming() const { return bAiming; }
 	void SetAiming(bool bPressed) { bAiming = bPressed; }
+	AWeapon* GetCurrentWeapon() const { return CurrentWeapon; }
 	
 protected:
 	virtual void BeginPlay() override;

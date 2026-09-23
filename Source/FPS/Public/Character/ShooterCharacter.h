@@ -7,6 +7,7 @@
 #include "Interfaces/PlayerInterface.h"
 #include "ShooterCharacter.generated.h"
 
+enum class ETurningInPlace : uint8;
 class UInputAction;
 class UCombatComponent;
 class UCameraComponent;
@@ -29,6 +30,16 @@ public:
 	virtual USkeletalMeshComponent* GetMesh1P_Implementation() const override;
 	virtual USkeletalMeshComponent* GetMesh3P_Implementation() const override;
 	//~ End UPlayerInterface Interface
+	
+	// 修复 GetBaseAimRotation() 压缩后数值范围问题
+	UFUNCTION(BlueprintCallable)
+	FRotator GetFixedAimRotation() const;
+	
+	UFUNCTION(BlueprintCallable)
+	bool HasCurrentWeapon() const;
+	
+	UPROPERTY(BlueprintReadOnly, Category="FPS|FABRIK")
+	FTransform FABRIKSocketTransform;
 
 protected:
 	virtual void BeginPlay() override;
@@ -44,6 +55,23 @@ private:
 	void InputFireWeaponReleased();
 	void InputAimPressed();
 	void InputAimReleased();
+	
+	void CalculateFABRIKSocketTransform();
+	// 原地转身
+	void CalculateTurnInPlaceParameters(float DeltaTime);
+	void TurnInPlace(float DeltaTime);
+	
+	FRotator StartingAimRotation;
+	float InterpAO_Yaw;
+	
+	UPROPERTY(BlueprintReadOnly, Category="FPS|TurnInPlace", meta=(AllowPrivateAccess = "true"))
+	float AO_YAW;
+	
+	UPROPERTY(BlueprintReadOnly, Category="FPS|TurnInPlace", meta=(AllowPrivateAccess = "true"))
+	ETurningInPlace TurningStatus;
+	
+	UPROPERTY(BlueprintReadOnly, Category="FPS|Strafing", meta=(AllowPrivateAccess = "true"))
+	float MovementOffsetYaw;
 	
 	// 第一人称视角
 	UPROPERTY(VisibleAnywhere)

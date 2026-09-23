@@ -9,6 +9,10 @@
 #include "Data/WeaponData.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "Kismet/KismetMathLibrary.h"
+#include "ShooterTypes/ShooterTypes.h"
+#include "Weapon/Weapon.h"
+
 
 AShooterCharacter::AShooterCharacter()
 {
@@ -46,6 +50,8 @@ AShooterCharacter::AShooterCharacter()
 	CombatComponent->SetIsReplicated(true);
 	
 	DefaultFOV = 90.0f;
+	
+	TurningStatus = ETurningInPlace::NotTurning;
 }
 
 void AShooterCharacter::BeginPlay()
@@ -53,6 +59,8 @@ void AShooterCharacter::BeginPlay()
 	Super::BeginPlay();
 	
 	FirstPersonCamera->SetFieldOfView(DefaultFOV);
+	
+	StartingAimRotation = FRotator(0.0f, GetBaseAimRotation().Yaw, 0.0f);
 }
 
 void AShooterCharacter::BeginDestroy()
@@ -68,7 +76,71 @@ void AShooterCharacter::BeginDestroy()
 void AShooterCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	
+	CalculateTurnInPlaceParameters(DeltaTime);
+	CalculateFABRIKSocketTransform();
+}
 
+void AShooterCharacter::CalculateTurnInPlaceParameters(float DeltaTime)
+{
+	FVector Velocity = GetVelocity();
+	Velocity.Z = 0.0f;
+	float Speed = Velocity.Size();
+	bool bIsInAir = GetCharacterMovement()->IsFalling();
+	
+	if (Speed == 0.0f && !bIsInAir)
+	{
+		FRotator CurrentAimRotation(0.0f, GetBaseAimRotation().Yaw, 0.0f);
+		// 在 BeginPlay里面初始化StartingAimRotation
+		FRotator DeltaAimRotation = UKismetMathLibrary::NormalizedDeltaRotator(CurrentAimRotation, StartingAimRotation);
+		AO_YAW = DeltaAimRotation.Yaw;
+		
+		
+		if (TurningStatus == ETurningInPlace::NotTurning)
+		{
+			InterpAO_Yaw = AO_YAW;
+		}
+		
+		TurnInPlace(DeltaTime);
+	}
+	
+	if (Speed > 0.0f || bIsInAir)
+	{
+		StartingAimRotation = FRotator(0.0f, GetBaseAimRotation().Yaw, 0.0f);
+		AO_YAW = 0.0f;
+		
+		FRotator AimRotation = GetBaseAimRotation();
+		FRotator MovementRotation = UKismetMathLibrary::MakeRotFromX(GetVelocity());
+		
+		MovementOffsetYaw = UKismetMathLibrary::NormalizedDeltaRotator(MovementRotation, AimRotation).Yaw;
+		TurningStatus = ETurningInPlace::NotTurning;
+	}
+	
+	AO_YAW *= -1.0f;
+}
+
+void AShooterCharacter::TurnInPlace(float DeltaTime)
+{
+	if (AO_YAW > 90.0f)
+	{
+		TurningStatus = ETurningInPlace::Right;
+	}
+	else if (AO_YAW < -90.0f)
+	{
+		TurningStatus = ETurningInPlace::Left;
+	}
+	
+	// 在转向中
+	if (TurningStatus != ETurningInPlace::NotTurning)
+	{
+		InterpAO_Yaw = FMath::FInterpTo(InterpAO_Yaw, 0.0f, DeltaTime, 4.0f);
+		AO_YAW = InterpAO_Yaw;
+		if (FMath::Abs(AO_YAW) < 5.0f)
+		{
+			TurningStatus = ETurningInPlace::NotTurning;
+			StartingAimRotation = FRotator(0.0f, GetBaseAimRotation().Yaw, 0.0f);
+		}
+	}
 }
 
 void AShooterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -112,6 +184,25 @@ USkeletalMeshComponent* AShooterCharacter::GetMesh3P_Implementation() const
 	return GetMesh();
 }
 
+FRotator AShooterCharacter::GetFixedAimRotation() const
+{
+	FRotator AimRotation = GetBaseAimRotation();
+	if (AimRotation.Pitch > 90.0f && !IsLocallyControlled())
+	{
+		// 把俯仰在 [270, 360) 映射到 [-90, 0]，默认 Y 轴 (上下瞄准) 方向是 360 度的	
+		const FVector2D InRange(270.0f, 360.0f);
+		const FVector2D OutRange(-90.0f, 0.0f);
+		AimRotation.Pitch = FMath::GetMappedRangeValueClamped(InRange, OutRange, AimRotation.Pitch);
+	}
+	
+	return AimRotation;
+}
+
+bool AShooterCharacter::HasCurrentWeapon() const
+{
+	return IsValid(CombatComponent) && CombatComponent->GetCurrentWeapon() != nullptr;
+}
+
 void AShooterCharacter::InputCycleWeapon()
 {
 	CombatComponent->InitiateCycleWeapon();
@@ -142,4 +233,25 @@ void AShooterCharacter::InputAimReleased()
 {
 	CombatComponent->InitiateAimReleased();
 	OnAim(false);
+}
+
+void AShooterCharacter::CalculateFABRIKSocketTransform()
+{
+	if (IsValid(CombatComponent) && IsValid(CombatComponent->GetCurrentWeapon()) && IsValid(CombatComponent->GetCurrentWeapon()->GetMesh3P()))
+	{
+		FABRIKSocketTransform = CombatComponent->GetCurrentWeapon()->GetMesh3P()->GetSocketTransform("FABRIK_Socket", RTS_World);
+		
+		FVector OutLocation;
+		FRotator OutRotation;
+		GetMesh()->TransformToBoneSpace(
+			"hand_r",
+			FABRIKSocketTransform.GetLocation(),
+			FABRIKSocketTransform.GetRotation().Rotator(),
+			OutLocation,
+			OutRotation
+		);
+		
+		FABRIKSocketTransform.SetLocation(OutLocation);
+		FABRIKSocketTransform.SetRotation(OutRotation.Quaternion());
+	}
 }
