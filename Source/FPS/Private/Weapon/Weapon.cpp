@@ -3,7 +3,10 @@
 
 #include "Weapon/Weapon.h"
 
+#include "KismetTraceUtils.h"
+#include "FPS/FPS.h"
 #include "Interfaces/PlayerInterface.h"
+#include "Kismet/KismetMathLibrary.h"
 
 AWeapon::AWeapon()
 {
@@ -24,8 +27,6 @@ AWeapon::AWeapon()
 	Mesh3P->CastShadow = true;
 	Mesh3P->SetHiddenInGame(true);
 	Mesh3P->SetupAttachment(Mesh1P);
-	
-	AimFOV = 65.0f;
 }
 
 void AWeapon::OnRep_Instigator()
@@ -60,6 +61,58 @@ void AWeapon::AttachToOwningPawn() const
 	Mesh3P->AttachToComponent(PawnMesh3P, FAttachmentTransformRules::KeepRelativeTransform, AttachPoint);
 }
 
+void AWeapon::WeaponTrace(FHitResult& OutHit, float TraceLength)
+{
+	FCollisionQueryParams QueryParams;
+	QueryParams.bReturnPhysicalMaterial = true;
+	QueryParams.AddIgnoredActor(GetOwner());
+	
+	FCollisionResponseParams ResponseParams;
+	ResponseParams.CollisionResponse.SetAllChannels(ECR_Ignore);
+	ResponseParams.CollisionResponse.SetResponse(ECC_Pawn, ECR_Block);
+	ResponseParams.CollisionResponse.SetResponse(ECC_WorldStatic, ECR_Block);
+	ResponseParams.CollisionResponse.SetResponse(ECC_WorldDynamic, ECR_Block);
+	ResponseParams.CollisionResponse.SetResponse(ECC_PhysicsBody, ECR_Block);
+	
+	ensure(GetInstigator());
+	
+	APlayerController* PlayerController = Cast<APlayerController>(GetInstigator()->GetController());
+	if (IsValid(PlayerController))
+	{
+		FVector EyesWorldLocation;
+		FRotator EyesWorldRotation;
+		PlayerController->GetActorEyesViewPoint(EyesWorldLocation, EyesWorldRotation);
+		const FVector EyesWorldDirection = UKismetMathLibrary::GetForwardVector(EyesWorldRotation);
+		
+		const FVector Start = EyesWorldLocation;
+		const FVector End = EyesWorldLocation + EyesWorldDirection * TraceLength;
+
+		const bool bHit = GetWorld()->SweepSingleByChannel(
+			OutHit,
+			Start,
+			End,
+			FQuat::Identity,
+			FPSTraceChannels::ECC_Weapon,
+			FCollisionShape::MakeSphere(TraceRadius),
+			QueryParams,
+			ResponseParams
+		);
+		
+		DrawDebugSphereTraceSingle(
+			GetWorld(),
+			Start,
+			End,
+			TraceRadius,
+			EDrawDebugTrace::ForDuration,
+			bHit,
+			OutHit,
+			FLinearColor::Green,
+			FLinearColor::Red,
+			5.0f
+		);
+	}
+}
+
 void AWeapon::SetMeshVisibilities(APawn* OwningPawn) const
 {
 	if (OwningPawn->IsLocallyControlled())
@@ -72,5 +125,11 @@ void AWeapon::SetMeshVisibilities(APawn* OwningPawn) const
 		Mesh1P->SetHiddenInGame(true);
 		Mesh3P->SetHiddenInGame(false);
 	}
+}
+
+void AWeapon::Local_Fire(const FVector& ImpactPoint, const FVector& ImpactNormal,
+	TEnumAsByte<EPhysicalSurface> SurfaceType, bool bIsFirstPerson)
+{
+	
 }
 

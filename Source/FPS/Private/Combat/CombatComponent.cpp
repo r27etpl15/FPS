@@ -3,9 +3,10 @@
 
 #include "Combat/CombatComponent.h"
 
+#include "Data/WeaponData.h"
+#include "Interfaces/PlayerInterface.h"
 #include "Net/UnrealNetwork.h"
 #include "Weapon/Weapon.h"
-
 
 UCombatComponent::UCombatComponent()
 {
@@ -32,33 +33,76 @@ void UCombatComponent::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty
 	DOREPLIFETIME_CONDITION(ThisClass, bAiming, COND_SkipOwner);
 }
 
-void UCombatComponent::InitiateCycleWeapon()
+void UCombatComponent::Initiate_CycleWeapon()
 {
 	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, TEXT("CycleWeapon"));
 }
 
-void UCombatComponent::InitiateFireWeaponPressed()
+void UCombatComponent::Initiate_FireWeaponPressed()
 {
-	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, TEXT("FireWeaponPressed"));
+	Local_FireWeapon();
 }
 
-void UCombatComponent::InitiateFireWeaponReleased()
+void UCombatComponent::Initiate_FireWeaponReleased()
 {
-	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, TEXT("FireWeaponReleased"));
+
 }
 
-void UCombatComponent::InitiateReloadWeapon()
+void UCombatComponent::Server_FireWeapon_Implementation()
+{
+	MultiCast_FireWeapon();
+}
+
+void UCombatComponent::MultiCast_FireWeapon_Implementation()
+{
+	APawn* OwningPawn = Cast<APawn>(GetOwner());
+	if (OwningPawn->IsLocallyControlled())
+	{
+		
+	}
+	else
+	{
+		ensure(IsValid(WeaponData));
+	
+		UAnimMontage* Montage3P = WeaponData->ThirdPersonMontages.FindChecked(CurrentWeapon->GetWeaponTypeTag()).FireMontage;
+		USkeletalMeshComponent* Mesh3P = IPlayerInterface::Execute_GetMesh3P(GetOwner());
+		if (IsValid(Montage3P) && IsValid(Mesh3P))
+		{
+			Mesh3P->GetAnimInstance()->Montage_Play(Montage3P);
+		}
+	}
+}
+
+void UCombatComponent::Local_FireWeapon()
+{
+	if (!IsValid(CurrentWeapon)) { return; }
+	ensure(IsValid(WeaponData));
+	
+	UAnimMontage* Montage1P = WeaponData->FirstPersonMontages.FindChecked(CurrentWeapon->GetWeaponTypeTag()).FireMontage;
+	USkeletalMeshComponent* Mesh1P = IPlayerInterface::Execute_GetMesh1P(GetOwner());
+	if (IsValid(Montage1P) && IsValid(Mesh1P))
+	{
+		Mesh1P->GetAnimInstance()->Montage_Play(Montage1P);
+	}
+	
+	FHitResult HitResult;
+	CurrentWeapon->WeaponTrace(HitResult, TraceLength);
+	
+	Server_FireWeapon();
+}
+
+void UCombatComponent::Initiate_ReloadWeapon()
 {
 	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, TEXT("ReloadWeapon"));
 }
 
-void UCombatComponent::InitiateAimPressed()
+void UCombatComponent::Initiate_AimPressed()
 {
 	SetAiming(true);
 	Server_Aim(bAiming);
 }
 
-void UCombatComponent::InitiateAimReleased()
+void UCombatComponent::Initiate_AimReleased()
 {
 	SetAiming(false);
 	Server_Aim(bAiming);

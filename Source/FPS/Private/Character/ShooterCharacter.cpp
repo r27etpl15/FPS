@@ -149,12 +149,12 @@ void AShooterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	
 	UEnhancedInputComponent* ShooterInputComponent = CastChecked<UEnhancedInputComponent>(PlayerInputComponent);
 	
-	ShooterInputComponent->BindAction(CycleWeaponAction, ETriggerEvent::Started, this, &ThisClass::InputCycleWeapon);
-	ShooterInputComponent->BindAction(FireWeaponAction, ETriggerEvent::Started, this, &ThisClass::InputFireWeaponPressed);
-	ShooterInputComponent->BindAction(FireWeaponAction, ETriggerEvent::Completed, this, &ThisClass::InputFireWeaponReleased);
-	ShooterInputComponent->BindAction(AimWeaponAction, ETriggerEvent::Started, this, &ThisClass::InputAimPressed);
-	ShooterInputComponent->BindAction(AimWeaponAction, ETriggerEvent::Completed, this, &ThisClass::InputAimReleased);
-	ShooterInputComponent->BindAction(ReloadWeaponAction, ETriggerEvent::Started, this, &ThisClass::InputReloadWeapon);
+	ShooterInputComponent->BindAction(CycleWeaponAction, ETriggerEvent::Started, this, &ThisClass::Input_CycleWeapon);
+	ShooterInputComponent->BindAction(FireWeaponAction, ETriggerEvent::Started, this, &ThisClass::Input_FireWeaponPressed);
+	ShooterInputComponent->BindAction(FireWeaponAction, ETriggerEvent::Completed, this, &ThisClass::Input_FireWeaponReleased);
+	ShooterInputComponent->BindAction(AimWeaponAction, ETriggerEvent::Started, this, &ThisClass::Input_AimPressed);
+	ShooterInputComponent->BindAction(AimWeaponAction, ETriggerEvent::Completed, this, &ThisClass::Input_AimReleased);
+	ShooterInputComponent->BindAction(ReloadWeaponAction, ETriggerEvent::Started, this, &ThisClass::Input_ReloadWeapon);
 }
 
 void AShooterCharacter::PossessedBy(AController* NewController)
@@ -171,7 +171,7 @@ FName AShooterCharacter::GetWeaponAttachPoint_Implementation(const FGameplayTag&
 {
 	checkf(CombatComponent->WeaponData, TEXT("没有Weapon Data Asset，请在角色类里面填写"));
 	
-	return CombatComponent->WeaponData->GetGripPoints().FindChecked(WeaponTypeTag);
+	return CombatComponent->WeaponData->GripPoints.FindChecked(WeaponTypeTag);
 }
 
 USkeletalMeshComponent* AShooterCharacter::GetMesh1P_Implementation() const
@@ -203,35 +203,35 @@ bool AShooterCharacter::HasCurrentWeapon() const
 	return IsValid(CombatComponent) && CombatComponent->GetCurrentWeapon() != nullptr;
 }
 
-void AShooterCharacter::InputCycleWeapon()
+void AShooterCharacter::Input_CycleWeapon()
 {
-	CombatComponent->InitiateCycleWeapon();
+	CombatComponent->Initiate_CycleWeapon();
 }
 
-void AShooterCharacter::InputReloadWeapon()
+void AShooterCharacter::Input_ReloadWeapon()
 {
-	CombatComponent->InitiateReloadWeapon();
+	CombatComponent->Initiate_ReloadWeapon();
 }
 
-void AShooterCharacter::InputFireWeaponPressed()
+void AShooterCharacter::Input_FireWeaponPressed()
 {
-	CombatComponent->InitiateFireWeaponPressed();
+	CombatComponent->Initiate_FireWeaponPressed();
 }
 
-void AShooterCharacter::InputFireWeaponReleased()
+void AShooterCharacter::Input_FireWeaponReleased()
 {
-	CombatComponent->InitiateFireWeaponReleased();
+	CombatComponent->Initiate_FireWeaponReleased();
 }
 
-void AShooterCharacter::InputAimPressed()
+void AShooterCharacter::Input_AimPressed()
 {
-	CombatComponent->InitiateAimPressed();
+	CombatComponent->Initiate_AimPressed();
 	OnAim(true);
 }
 
-void AShooterCharacter::InputAimReleased()
+void AShooterCharacter::Input_AimReleased()
 {
-	CombatComponent->InitiateAimReleased();
+	CombatComponent->Initiate_AimReleased();
 	OnAim(false);
 }
 

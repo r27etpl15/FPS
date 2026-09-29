@@ -49,12 +49,12 @@ protected:
 	void OnAim(bool bIsAiming);
 	
 private:
-	void InputCycleWeapon();
-	void InputReloadWeapon();
-	void InputFireWeaponPressed();
-	void InputFireWeaponReleased();
-	void InputAimPressed();
-	void InputAimReleased();
+	void Input_CycleWeapon();
+	void Input_ReloadWeapon();
+	void Input_FireWeaponPressed();
+	void Input_FireWeaponReleased();
+	void Input_AimPressed();
+	void Input_AimReleased();
 	
 	void CalculateFABRIKSocketTransform();
 	// 原地转身

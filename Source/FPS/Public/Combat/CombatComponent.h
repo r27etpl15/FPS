@@ -22,12 +22,12 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 	
 	// 切换下一把武器
-	void InitiateCycleWeapon();
-	void InitiateFireWeaponPressed();
-	void InitiateFireWeaponReleased();
-	void InitiateReloadWeapon();
-	void InitiateAimPressed();
-	void InitiateAimReleased();
+	void Initiate_CycleWeapon();
+	void Initiate_FireWeaponPressed();
+	void Initiate_FireWeaponReleased();
+	void Initiate_ReloadWeapon();
+	void Initiate_AimPressed();
+	void Initiate_AimReleased();
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="FPS|Weapon")
 	TObjectPtr<UWeaponData> WeaponData;
@@ -42,6 +42,9 @@ public:
 	
 protected:
 	virtual void BeginPlay() override;
+	
+	UPROPERTY(EditDefaultsOnly, Category="FPS|Weapon")
+	float TraceLength = 20000;
 	
 private:
 	UPROPERTY(Transient, Replicated)
@@ -63,4 +66,12 @@ private:
 	
 	UFUNCTION(Server, Reliable)
 	void Server_Aim(bool bPressed);
+	
+	UFUNCTION(Server, Reliable)
+	void Server_FireWeapon();
+	
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiCast_FireWeapon();
+	
+	void Local_FireWeapon();
 };

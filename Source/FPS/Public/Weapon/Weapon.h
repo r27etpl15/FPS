@@ -22,6 +22,7 @@ public:
 	virtual void OnRep_Instigator() override;
 	
 	void AttachToOwningPawn() const;
+	void WeaponTrace(FHitResult& OutHit, float TraceLength);
 
 protected:
 	virtual void BeginPlay() override;
@@ -39,7 +40,12 @@ private:
 	FGameplayTag WeaponTypeTag;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="FPS|Aiming", meta=(AllowPrivateAccess = "true"))
-	float AimFOV;
+	float AimFOV = 65.0f;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="FPS|Trace", meta=(AllowPrivateAccess = "true"))
+	float TraceRadius = 3.0f;
 	
 	void SetMeshVisibilities(APawn* OwningPawn) const;
+	
+	void Local_Fire(const FVector& ImpactPoint, const FVector& ImpactNormal, TEnumAsByte<EPhysicalSurface> SurfaceType, bool bIsFirstPerson);
 };
