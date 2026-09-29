@@ -23,17 +23,21 @@ public:
 	
 	void AttachToOwningPawn() const;
 	void WeaponTrace(FHitResult& OutHit, float TraceLength);
+	void Local_Fire(const FVector& ImpactPoint, const FVector& ImpactNormal, TEnumAsByte<EPhysicalSurface> ImpactSurfaceType, bool bIsFirstPerson);
 
 protected:
 	virtual void BeginPlay() override;
 	
+	UFUNCTION(BlueprintImplementableEvent)
+	void FireEffects(const FVector& ImpactPoint, const FVector& ImpactNormal, EPhysicalSurface ImpactSurfaceType, bool bIsFirstPerson);
+	
 private:
 	// 面相第一人称
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="FPS|Weapon", meta=(AllowPrivateAccess = "true"))
 	TObjectPtr<USkeletalMeshComponent> Mesh1P;
 	
 	// 面相第三人称
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="FPS|Weapon", meta=(AllowPrivateAccess = "true"))
 	TObjectPtr<USkeletalMeshComponent> Mesh3P;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FPS|WeaponType", meta=(AllowPrivateAccess = "true"))
@@ -45,7 +49,8 @@ private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="FPS|Trace", meta=(AllowPrivateAccess = "true"))
 	float TraceRadius = 3.0f;
 	
-	void SetMeshVisibilities(APawn* OwningPawn) const;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="FPS|Trace", meta=(AllowPrivateAccess = "true"))
+	bool bShowDebugSphereTrace = false;
 	
-	void Local_Fire(const FVector& ImpactPoint, const FVector& ImpactNormal, TEnumAsByte<EPhysicalSurface> SurfaceType, bool bIsFirstPerson);
+	void SetMeshVisibilities(APawn* OwningPawn) const;
 };

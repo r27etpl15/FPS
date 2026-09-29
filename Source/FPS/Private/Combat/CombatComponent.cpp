@@ -48,12 +48,12 @@ void UCombatComponent::Initiate_FireWeaponReleased()
 
 }
 
-void UCombatComponent::Server_FireWeapon_Implementation()
+void UCombatComponent::Server_FireWeapon_Implementation(const FHitResult& HitResult)
 {
-	MultiCast_FireWeapon();
+	MultiCast_FireWeapon(HitResult);
 }
 
-void UCombatComponent::MultiCast_FireWeapon_Implementation()
+void UCombatComponent::MultiCast_FireWeapon_Implementation(const FHitResult& HitResult)
 {
 	APawn* OwningPawn = Cast<APawn>(GetOwner());
 	if (OwningPawn->IsLocallyControlled())
@@ -63,6 +63,9 @@ void UCombatComponent::MultiCast_FireWeapon_Implementation()
 	else
 	{
 		ensure(IsValid(WeaponData));
+		
+		EPhysicalSurface ImpactSurfaceType = HitResult.PhysMaterial.IsValid(false) ? HitResult.PhysMaterial->SurfaceType.GetValue() : SurfaceType1;
+		CurrentWeapon->Local_Fire(HitResult.ImpactPoint, HitResult.ImpactNormal, ImpactSurfaceType, false);
 	
 		UAnimMontage* Montage3P = WeaponData->ThirdPersonMontages.FindChecked(CurrentWeapon->GetWeaponTypeTag()).FireMontage;
 		USkeletalMeshComponent* Mesh3P = IPlayerInterface::Execute_GetMesh3P(GetOwner());
@@ -88,7 +91,10 @@ void UCombatComponent::Local_FireWeapon()
 	FHitResult HitResult;
 	CurrentWeapon->WeaponTrace(HitResult, TraceLength);
 	
-	Server_FireWeapon();
+	EPhysicalSurface ImpactSurfaceType = HitResult.PhysMaterial.IsValid(false) ? HitResult.PhysMaterial->SurfaceType.GetValue() : SurfaceType1;
+	CurrentWeapon->Local_Fire(HitResult.ImpactPoint, HitResult.ImpactNormal, ImpactSurfaceType, true);
+	
+	Server_FireWeapon(HitResult);
 }
 
 void UCombatComponent::Initiate_ReloadWeapon()

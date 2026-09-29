@@ -98,18 +98,27 @@ void AWeapon::WeaponTrace(FHitResult& OutHit, float TraceLength)
 			ResponseParams
 		);
 		
-		DrawDebugSphereTraceSingle(
-			GetWorld(),
-			Start,
-			End,
-			TraceRadius,
-			EDrawDebugTrace::ForDuration,
-			bHit,
-			OutHit,
-			FLinearColor::Green,
-			FLinearColor::Red,
-			5.0f
-		);
+		// 防止没有命中时子弹轨迹朝向世界原点
+		if (!bHit)
+		{
+			OutHit.ImpactPoint = End;
+		}
+		
+		if (bShowDebugSphereTrace)
+		{
+			DrawDebugSphereTraceSingle(
+				GetWorld(),
+				Start,
+				End,
+				TraceRadius,
+				EDrawDebugTrace::ForDuration,
+				bHit,
+				OutHit,
+				FLinearColor::Green,
+				FLinearColor::Red,
+				5.0f
+			);	
+		}
 	}
 }
 
@@ -128,8 +137,8 @@ void AWeapon::SetMeshVisibilities(APawn* OwningPawn) const
 }
 
 void AWeapon::Local_Fire(const FVector& ImpactPoint, const FVector& ImpactNormal,
-	TEnumAsByte<EPhysicalSurface> SurfaceType, bool bIsFirstPerson)
+	TEnumAsByte<EPhysicalSurface> ImpactSurfaceType, bool bIsFirstPerson)
 {
-	
+	FireEffects(ImpactPoint, ImpactNormal, ImpactSurfaceType, bIsFirstPerson);
 }
 
