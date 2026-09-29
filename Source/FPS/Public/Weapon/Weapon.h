@@ -27,13 +27,16 @@ public:
 	USkeletalMeshComponent* GetMesh3P() const { return Mesh3P; }
 	float GetFireTime() const { return FireTime; }
 	EFireType GetFireType() const { return FireType; }
+	int32 GetAmmo() const { return Ammo; }
 	
 	virtual void OnRep_Instigator() override;
 	
 	void AttachToOwningPawn() const;
 	void WeaponTrace(FHitResult& OutHit, float TraceLength);
 	void Local_Fire(const FVector& ImpactPoint, const FVector& ImpactNormal, TEnumAsByte<EPhysicalSurface> ImpactSurfaceType, bool bIsFirstPerson);
-
+	void Auth_Fire();
+	void Rep_fire(int32 AuthAmmo);
+	
 protected:
 	virtual void BeginPlay() override;
 	
@@ -66,6 +69,17 @@ private:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FPS|FireType", meta=(AllowPrivateAccess = "true"))
 	float FireTime = 0.1f;
+	
+	UPROPERTY(EditAnywhere, Category="FPS|Ammo")
+	int32 MagCapacity = 10;
+	
+	UPROPERTY(EditAnywhere, Category="FPS|Ammo")
+	int32 Ammo = 5;
+	
+	UPROPERTY(EditAnywhere, Category="FPS|Ammo")
+	int32 StartingCarriedAmmo = 10;
+	
+	int32 Sequence = 0;
 	
 	void SetMeshVisibilities(APawn* OwningPawn) const;
 };

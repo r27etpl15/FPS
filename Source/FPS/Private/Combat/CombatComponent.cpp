@@ -40,9 +40,14 @@ void UCombatComponent::Initiate_CycleWeapon()
 
 void UCombatComponent::Initiate_FireWeaponPressed()
 {
+	if (!IsValid(CurrentWeapon)) { return; }
+	
 	bTriggerPressed = true;
 	
-	Local_FireWeapon();
+	if (CurrentWeapon->GetAmmo() > 0)
+	{
+		Local_FireWeapon();	
+	}
 }
 
 void UCombatComponent::Initiate_FireWeaponReleased()
@@ -52,15 +57,22 @@ void UCombatComponent::Initiate_FireWeaponReleased()
 
 void UCombatComponent::Server_FireWeapon_Implementation(const FHitResult& HitResult)
 {
-	MultiCast_FireWeapon(HitResult);
+	if (!IsValid(CurrentWeapon)) { return; }
+	
+	if (GetNetMode() != NM_ListenServer || !Cast<APawn>(GetOwner())->IsLocallyControlled())
+	{
+		CurrentWeapon->Auth_Fire();
+	}
+	
+	MultiCast_FireWeapon(HitResult, CurrentWeapon->GetAmmo());
 }
 
-void UCombatComponent::MultiCast_FireWeapon_Implementation(const FHitResult& HitResult)
+void UCombatComponent::MultiCast_FireWeapon_Implementation(const FHitResult& HitResult, int32 AuthAmmo)
 {
 	APawn* OwningPawn = Cast<APawn>(GetOwner());
 	if (OwningPawn->IsLocallyControlled())
 	{
-		
+		CurrentWeapon->Rep_fire(AuthAmmo);
 	}
 	else
 	{
@@ -107,7 +119,7 @@ void UCombatComponent::FireTimerFinished()
 {
 	if (!IsValid(CurrentWeapon)) { return; }
 	
-	if (bTriggerPressed && CurrentWeapon->GetFireType() == EFireType::Auto)
+	if (bTriggerPressed && CurrentWeapon->GetFireType() == EFireType::Auto && CurrentWeapon->GetAmmo() > 0)
 	{
 		Local_FireWeapon();
 	}
