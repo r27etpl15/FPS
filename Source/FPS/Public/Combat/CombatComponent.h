@@ -47,6 +47,11 @@ protected:
 	float TraceLength = 20000;
 	
 private:
+	void FireTimerFinished();
+	
+	bool bTriggerPressed = false;
+	FTimerHandle FireTimer;
+	
 	UPROPERTY(Transient, Replicated)
 	TArray<TObjectPtr<AWeapon>> Inventory;
 	
@@ -57,7 +62,7 @@ private:
 	TObjectPtr<AWeapon> CurrentWeapon;
 	
 	UPROPERTY(BlueprintReadOnly, Replicated, meta=(AllowPrivateAccess = "true"))
-	bool bAiming;
+	bool bAiming = false;
 	
 	UFUNCTION()
 	void OnRep_CurrentWeapon(AWeapon* LastWeapon);

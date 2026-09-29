@@ -7,6 +7,13 @@
 #include "GameFramework/Actor.h"
 #include "Weapon.generated.h"
 
+UENUM(BlueprintType)
+enum class EFireType : uint8
+{
+	Auto,
+	SemiAuto
+};
+
 UCLASS()
 class FPS_API AWeapon : public AActor
 {
@@ -18,6 +25,8 @@ public:
 	FGameplayTag GetWeaponTypeTag() const { return WeaponTypeTag; }
 	USkeletalMeshComponent* GetMesh1P() const { return Mesh1P; }
 	USkeletalMeshComponent* GetMesh3P() const { return Mesh3P; }
+	float GetFireTime() const { return FireTime; }
+	EFireType GetFireType() const { return FireType; }
 	
 	virtual void OnRep_Instigator() override;
 	
@@ -51,6 +60,12 @@ private:
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="FPS|Trace", meta=(AllowPrivateAccess = "true"))
 	bool bShowDebugSphereTrace = false;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FPS|FireType", meta=(AllowPrivateAccess = "true"))
+	EFireType FireType = EFireType::SemiAuto;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FPS|FireType", meta=(AllowPrivateAccess = "true"))
+	float FireTime = 0.1f;
 	
 	void SetMeshVisibilities(APawn* OwningPawn) const;
 };

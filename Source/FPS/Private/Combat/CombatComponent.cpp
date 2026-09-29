@@ -40,12 +40,14 @@ void UCombatComponent::Initiate_CycleWeapon()
 
 void UCombatComponent::Initiate_FireWeaponPressed()
 {
+	bTriggerPressed = true;
+	
 	Local_FireWeapon();
 }
 
 void UCombatComponent::Initiate_FireWeaponReleased()
 {
-
+	bTriggerPressed = false;
 }
 
 void UCombatComponent::Server_FireWeapon_Implementation(const FHitResult& HitResult)
@@ -71,6 +73,7 @@ void UCombatComponent::MultiCast_FireWeapon_Implementation(const FHitResult& Hit
 		USkeletalMeshComponent* Mesh3P = IPlayerInterface::Execute_GetMesh3P(GetOwner());
 		if (IsValid(Montage3P) && IsValid(Mesh3P))
 		{
+			// 播放的是角色蒙太奇，不是武器的
 			Mesh3P->GetAnimInstance()->Montage_Play(Montage3P);
 		}
 	}
@@ -85,6 +88,7 @@ void UCombatComponent::Local_FireWeapon()
 	USkeletalMeshComponent* Mesh1P = IPlayerInterface::Execute_GetMesh1P(GetOwner());
 	if (IsValid(Montage1P) && IsValid(Mesh1P))
 	{
+		// 播放的是角色蒙太奇，不是武器的
 		Mesh1P->GetAnimInstance()->Montage_Play(Montage1P);
 	}
 	
@@ -94,7 +98,19 @@ void UCombatComponent::Local_FireWeapon()
 	EPhysicalSurface ImpactSurfaceType = HitResult.PhysMaterial.IsValid(false) ? HitResult.PhysMaterial->SurfaceType.GetValue() : SurfaceType1;
 	CurrentWeapon->Local_Fire(HitResult.ImpactPoint, HitResult.ImpactNormal, ImpactSurfaceType, true);
 	
+	GetWorld()->GetTimerManager().SetTimer(FireTimer, this, &ThisClass::FireTimerFinished, CurrentWeapon->GetFireTime());
+	
 	Server_FireWeapon(HitResult);
+}
+
+void UCombatComponent::FireTimerFinished()
+{
+	if (!IsValid(CurrentWeapon)) { return; }
+	
+	if (bTriggerPressed && CurrentWeapon->GetFireType() == EFireType::Auto)
+	{
+		Local_FireWeapon();
+	}
 }
 
 void UCombatComponent::Initiate_ReloadWeapon()
