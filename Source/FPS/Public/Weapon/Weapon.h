@@ -37,6 +37,9 @@ public:
 	void Auth_Fire();
 	void Rep_fire(int32 AuthAmmo);
 	
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnDryFire(bool bIsFirstPerson);
+	
 protected:
 	virtual void BeginPlay() override;
 	

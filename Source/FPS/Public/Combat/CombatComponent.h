@@ -75,8 +75,14 @@ private:
 	UFUNCTION(Server, Reliable)
 	void Server_FireWeapon(const FHitResult& HitResult);
 	
+	UFUNCTION(Server, Reliable)
+	void Server_DryFire();
+	
 	UFUNCTION(NetMulticast, Reliable)
 	void MultiCast_FireWeapon(const FHitResult& HitResult, int32 AuthAmmo);
+	
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiCast_DryFire();
 	
 	void Local_FireWeapon();
 };

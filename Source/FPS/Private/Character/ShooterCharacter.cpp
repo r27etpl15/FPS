@@ -29,6 +29,7 @@ AShooterCharacter::AShooterCharacter()
 	FirstPersonCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FirstPersonCamera"));
 	FirstPersonCamera->SetupAttachment(SpringArm);
 	FirstPersonCamera->bUsePawnControlRotation = false;
+	FirstPersonCamera->SetOrthoNearClipPlane(1.0f);
 	
 	Mesh1P = CreateDefaultSubobject<USkeletalMeshComponent>("Mesh1P");
 	Mesh1P->SetupAttachment(FirstPersonCamera);

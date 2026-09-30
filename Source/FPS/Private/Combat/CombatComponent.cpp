@@ -48,6 +48,12 @@ void UCombatComponent::Initiate_FireWeaponPressed()
 	{
 		Local_FireWeapon();	
 	}
+	else
+	{
+		CurrentWeapon->OnDryFire(true);
+		
+		Server_DryFire();
+	}
 }
 
 void UCombatComponent::Initiate_FireWeaponReleased()
@@ -88,6 +94,21 @@ void UCombatComponent::MultiCast_FireWeapon_Implementation(const FHitResult& Hit
 			// 播放的是角色蒙太奇，不是武器的
 			Mesh3P->GetAnimInstance()->Montage_Play(Montage3P);
 		}
+	}
+}
+
+void UCombatComponent::Server_DryFire_Implementation()
+{
+	MultiCast_DryFire();
+}
+
+void UCombatComponent::MultiCast_DryFire_Implementation()
+{
+	if (!IsValid(CurrentWeapon)) { return; }
+	
+	if (!Cast<APawn>(GetOwner())->IsLocallyControlled())
+	{
+		CurrentWeapon->OnDryFire(false);	
 	}
 }
 
