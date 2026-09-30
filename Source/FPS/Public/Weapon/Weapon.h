@@ -7,6 +7,8 @@
 #include "GameFramework/Actor.h"
 #include "Weapon.generated.h"
 
+class UMaterialInstanceDynamic;
+
 UENUM(BlueprintType)
 enum class EFireType : uint8
 {
@@ -28,6 +30,9 @@ public:
 	float GetFireTime() const { return FireTime; }
 	EFireType GetFireType() const { return FireType; }
 	int32 GetAmmo() const { return Ammo; }
+	int32 GetMagCapacity() const { return MagCapacity; }
+	UMaterialInstanceDynamic* GetReticleDynamicMaterialInstance();
+	UMaterialInstanceDynamic* GetAmmoCounterDynamicMaterialInstance();
 	
 	virtual void OnRep_Instigator() override;
 	
@@ -81,6 +86,18 @@ private:
 	
 	UPROPERTY(EditAnywhere, Category="FPS|Ammo")
 	int32 StartingCarriedAmmo = 10;
+	
+	UPROPERTY(EditDefaultsOnly, Category="FPS|Weapon")
+	TObjectPtr<UMaterialInterface> ReticleMaterialInterface;
+	
+	UPROPERTY(EditDefaultsOnly, Category="FPS|Weapon")
+	TObjectPtr<UMaterialInterface> AmmoCounterMaterialInterface;
+	
+	UPROPERTY()
+	TObjectPtr<UMaterialInstanceDynamic> DynamicMaterialInstance_Reticle;
+	
+	UPROPERTY()
+	TObjectPtr<UMaterialInstanceDynamic> DynamicMaterialInstance_AmmoCounter;
 	
 	int32 Sequence = 0;
 	

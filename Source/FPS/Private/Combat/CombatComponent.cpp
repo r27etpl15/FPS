@@ -13,6 +13,15 @@ UCombatComponent::UCombatComponent()
 	PrimaryComponentTick.bCanEverTick = true;
 }
 
+void UCombatComponent::InitializeWeaponWidgets() const
+{
+	if (!IsValid(CurrentWeapon))
+	{
+		OnReticleChanged.Broadcast(CurrentWeapon->GetReticleDynamicMaterialInstance());
+		OnAmmoCounterChanged.Broadcast(CurrentWeapon->GetAmmoCounterDynamicMaterialInstance(), CurrentWeapon->GetAmmo(), CurrentWeapon->GetMagCapacity());
+	}
+}
+
 void UCombatComponent::BeginPlay()
 {
 	Super::BeginPlay();
@@ -181,6 +190,7 @@ void UCombatComponent::SpawnInventory()
 	if (Inventory.Num() > 0)
 	{
 		EquipWeapon(Inventory[0]);
+		InitializeWeaponWidgets();
 	}
 }
 
@@ -221,4 +231,6 @@ void UCombatComponent::OnRep_CurrentWeapon(AWeapon* LastWeapon)
 	if (!IsValid(CurrentWeapon)) { return; }
 	
 	CurrentWeapon->AttachToOwningPawn();
+	IPlayerInterface::Execute_WeaponReplicated(GetOwner());
+	InitializeWeaponWidgets();
 }

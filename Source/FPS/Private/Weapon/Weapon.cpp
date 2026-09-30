@@ -29,6 +29,26 @@ AWeapon::AWeapon()
 	Mesh3P->SetupAttachment(Mesh1P);
 }
 
+UMaterialInstanceDynamic* AWeapon::GetReticleDynamicMaterialInstance()
+{
+	if (!IsValid(DynamicMaterialInstance_Reticle))
+	{
+		DynamicMaterialInstance_Reticle = UMaterialInstanceDynamic::Create(ReticleMaterialInterface, this);
+	}
+	
+	return DynamicMaterialInstance_Reticle;
+}
+
+UMaterialInstanceDynamic* AWeapon::GetAmmoCounterDynamicMaterialInstance()
+{
+	if (!IsValid(DynamicMaterialInstance_AmmoCounter))
+	{
+		DynamicMaterialInstance_AmmoCounter = UMaterialInstanceDynamic::Create(AmmoCounterMaterialInterface, this);
+	}
+	
+	return DynamicMaterialInstance_AmmoCounter;
+}
+
 void AWeapon::OnRep_Instigator()
 {
 	Super::OnRep_Instigator();

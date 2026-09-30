@@ -13,6 +13,8 @@ class UCombatComponent;
 class UCameraComponent;
 class USpringArmComponent;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FWeaponFirstReplicated, AWeapon*, Weapon);
+
 UCLASS()
 class FPS_API AShooterCharacter : public ACharacter, public IPlayerInterface
 {
@@ -29,7 +31,11 @@ public:
 	virtual FName GetWeaponAttachPoint_Implementation(const FGameplayTag& WeaponTypeTag) const override;
 	virtual USkeletalMeshComponent* GetMesh1P_Implementation() const override;
 	virtual USkeletalMeshComponent* GetMesh3P_Implementation() const override;
+	virtual void WeaponReplicated_Implementation() override;
+	virtual AWeapon* GetCurrentWeapon_Implementation() const override;
 	//~ End UPlayerInterface Interface
+	
+	bool HasWeaponFirstReplicated() const { return bWeaponFirstReplicated; }
 	
 	// 修复 GetBaseAimRotation() 压缩后数值范围问题
 	UFUNCTION(BlueprintCallable)
@@ -40,6 +46,9 @@ public:
 	
 	UPROPERTY(BlueprintReadOnly, Category="FPS|FABRIK")
 	FTransform FABRIKSocketTransform;
+	
+	UPROPERTY(BlueprintAssignable)
+	FWeaponFirstReplicated OnWeaponFirstReplicated;
 
 protected:
 	virtual void BeginPlay() override;
@@ -63,6 +72,7 @@ private:
 	
 	FRotator StartingAimRotation;
 	float InterpAO_Yaw;
+	bool bWeaponFirstReplicated = false;
 	
 	UPROPERTY(BlueprintReadOnly, Category="FPS|TurnInPlace", meta=(AllowPrivateAccess = "true"))
 	float AO_YAW;

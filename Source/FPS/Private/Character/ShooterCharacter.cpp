@@ -185,6 +185,20 @@ USkeletalMeshComponent* AShooterCharacter::GetMesh3P_Implementation() const
 	return GetMesh();
 }
 
+void AShooterCharacter::WeaponReplicated_Implementation()
+{
+	if (!bWeaponFirstReplicated)
+	{
+		bWeaponFirstReplicated = true;
+		OnWeaponFirstReplicated.Broadcast(CombatComponent->GetCurrentWeapon());
+	}
+}
+
+AWeapon* AShooterCharacter::GetCurrentWeapon_Implementation() const
+{
+	return CombatComponent->GetCurrentWeapon();
+}
+
 FRotator AShooterCharacter::GetFixedAimRotation() const
 {
 	FRotator AimRotation = GetBaseAimRotation();

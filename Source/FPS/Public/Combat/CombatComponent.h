@@ -9,6 +9,10 @@
 
 class AWeapon;
 class UWeaponData;
+class UMaterialInstanceDynamic;
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FReticleChanged, UMaterialInstanceDynamic*, ReticleDynamicInstance);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FAmmoCounterChanged, UMaterialInstanceDynamic*, AmmoCounterDynamicInstance, int32, RoundsCurrent, int32, RoundsMax);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class FPS_API UCombatComponent : public UActorComponent
@@ -21,6 +25,9 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 	
+	UFUNCTION(BlueprintPure, Category="FPS|Combat")
+	static UCombatComponent* FindCombatComponent(const AActor* Actor) { return IsValid(Actor) ? Actor->FindComponentByClass<UCombatComponent>() : nullptr; }
+	
 	// 切换下一把武器
 	void Initiate_CycleWeapon();
 	void Initiate_FireWeaponPressed();
@@ -32,6 +39,12 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="FPS|Weapon")
 	TObjectPtr<UWeaponData> WeaponData;
 	
+	UPROPERTY(BlueprintAssignable)
+	FReticleChanged OnReticleChanged;
+	
+	UPROPERTY(BlueprintAssignable)
+	FAmmoCounterChanged OnAmmoCounterChanged;
+	
 	void SpawnInventory();
 	void DestroyInventory();
 	void EquipWeapon(AWeapon* InWeapon);
@@ -39,6 +52,8 @@ public:
 	bool IsAiming() const { return bAiming; }
 	void SetAiming(bool bPressed) { bAiming = bPressed; }
 	AWeapon* GetCurrentWeapon() const { return CurrentWeapon; }
+	
+	void InitializeWeaponWidgets() const;
 	
 protected:
 	virtual void BeginPlay() override;
