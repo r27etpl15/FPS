@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
 #include "GameFramework/Actor.h"
+#include "ShooterTypes/ShooterTypes.h"
 #include "Weapon.generated.h"
 
 class UMaterialInstanceDynamic;
@@ -33,6 +34,7 @@ public:
 	int32 GetMagCapacity() const { return MagCapacity; }
 	UMaterialInstanceDynamic* GetReticleDynamicMaterialInstance();
 	UMaterialInstanceDynamic* GetAmmoCounterDynamicMaterialInstance();
+	FReticleParams GetReticleParams() const { return ReticleParams; }
 	
 	virtual void OnRep_Instigator() override;
 	
@@ -92,6 +94,9 @@ private:
 	
 	UPROPERTY(EditDefaultsOnly, Category="FPS|Weapon")
 	TObjectPtr<UMaterialInterface> AmmoCounterMaterialInterface;
+	
+	UPROPERTY(EditDefaultsOnly, Category="FPS|Reticle")
+	FReticleParams ReticleParams;
 	
 	UPROPERTY()
 	TObjectPtr<UMaterialInstanceDynamic> DynamicMaterialInstance_Reticle;

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+#include "ShooterTypes/ShooterTypes.h"
 #include "ShooterReticleWidget.generated.h"
 
 class AWeapon;
@@ -32,6 +33,16 @@ private:
 	TWeakObjectPtr<UMaterialInstanceDynamic> CurrentReticle_DynamicMaterialInstance;
 	TWeakObjectPtr<UMaterialInstanceDynamic> CurrentAmmoCounter_DynamicMaterialInstance;
 	
+	FReticleParams CurrentReticleParams;
+	float BaseCornerScaleFactor;
+	float BaseShapeCutFactor;
+	float BaseCornerScaleFactor_RoundFired;
+	float BaseShapeCutFactor_RoundFired;
+	float BaseCornerScaleFactor_Aiming;
+	float BaseShapeCutFactor_Aiming;
+	
+	bool bAiming;
+	
 	UFUNCTION()
 	void OnPossessedPawnChanged(APawn* OldPawn, APawn* NewPawn);
 	
@@ -39,12 +50,15 @@ private:
 	void OnWeaponFirstReplicated(AWeapon* Weapon);
 	
 	UFUNCTION()
-	void OnReticleChanged(UMaterialInstanceDynamic* ReticleDynamicMaterialInstance);
+	void OnReticleChanged(UMaterialInstanceDynamic* ReticleDynamicMaterialInstance, const FReticleParams& ReticleParams);
 	
 	UFUNCTION()
 	void OnAmmoCounterChanged(UMaterialInstanceDynamic* AmmoCounterDynamicMaterialInstance, int32 RoundsCurrent, int32 RoundsMax);
 	
 	UFUNCTION()
 	void OnRoundFired(int32 RoundsCurrent, int32 RoundsMax);
+	
+	UFUNCTION()
+	void OnAimingStatusChanged(bool bIsAiming);
 };
 

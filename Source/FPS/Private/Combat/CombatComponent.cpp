@@ -17,7 +17,7 @@ void UCombatComponent::InitializeWeaponWidgets() const
 {
 	if (!IsValid(CurrentWeapon))
 	{
-		OnReticleChanged.Broadcast(CurrentWeapon->GetReticleDynamicMaterialInstance());
+		OnReticleChanged.Broadcast(CurrentWeapon->GetReticleDynamicMaterialInstance(), CurrentWeapon->GetReticleParams());
 		OnAmmoCounterChanged.Broadcast(CurrentWeapon->GetAmmoCounterDynamicMaterialInstance(), CurrentWeapon->GetAmmo(), CurrentWeapon->GetMagCapacity());
 	}
 }
@@ -164,19 +164,19 @@ void UCombatComponent::Initiate_ReloadWeapon()
 
 void UCombatComponent::Initiate_AimPressed()
 {
-	SetAiming(true);
+	Local_Aim(true);
 	Server_Aim(bAiming);
 }
 
 void UCombatComponent::Initiate_AimReleased()
 {
-	SetAiming(false);
+	Local_Aim(false);
 	Server_Aim(bAiming);
 }
 
 void UCombatComponent::Server_Aim_Implementation(bool bPressed)
 {
-	SetAiming(bPressed);
+	Local_Aim(bPressed);
 }
 
 void UCombatComponent::SpawnInventory()
@@ -211,6 +211,13 @@ void UCombatComponent::EquipWeapon(AWeapon* InWeapon)
 {
 	CurrentWeapon = InWeapon;
 	CurrentWeapon->AttachToOwningPawn();
+}
+
+void UCombatComponent::Local_Aim(bool bPressed)
+{
+	bAiming = bPressed;
+	
+	OnAimingStatusChanged.Broadcast(bAiming);
 }
 
 AWeapon* UCombatComponent::SpawnWeapon(TSubclassOf<AWeapon> WeaponClass) const

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "ShooterTypes/ShooterTypes.h"
 #include "CombatComponent.generated.h"
 
 
@@ -11,9 +12,10 @@ class AWeapon;
 class UWeaponData;
 class UMaterialInstanceDynamic;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FReticleChanged, UMaterialInstanceDynamic*, ReticleDynamicInstance);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FReticleChanged, UMaterialInstanceDynamic*, ReticleDynamicInstance, const FReticleParams&, ReticleParams);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FAmmoCounterChanged, UMaterialInstanceDynamic*, AmmoCounterDynamicInstance, int32, RoundsCurrent, int32, RoundsMax);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FRoundFired, int32, RoundsCurrent, int32, RoundsMax);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAimingStatusChanged, bool, bIsAiming);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class FPS_API UCombatComponent : public UActorComponent
@@ -49,12 +51,14 @@ public:
 	UPROPERTY(BlueprintAssignable)
 	FRoundFired OnRoundFired;
 	
+	UPROPERTY(BlueprintAssignable)
+	FAimingStatusChanged OnAimingStatusChanged;
+	
 	void SpawnInventory();
 	void DestroyInventory();
 	void EquipWeapon(AWeapon* InWeapon);
 	
 	bool IsAiming() const { return bAiming; }
-	void SetAiming(bool bPressed) { bAiming = bPressed; }
 	AWeapon* GetCurrentWeapon() const { return CurrentWeapon; }
 	
 	void InitializeWeaponWidgets() const;
@@ -103,5 +107,6 @@ private:
 	UFUNCTION(NetMulticast, Reliable)
 	void MultiCast_DryFire();
 	
+	void Local_Aim(bool bPressed);
 	void Local_FireWeapon();
 };
