@@ -5,11 +5,21 @@
 
 #include "Character/ShooterCharacter.h"
 #include "Combat/CombatComponent.h"
+#include "Components/Image.h"
 #include "Weapon/Weapon.h"
+
+namespace Ammo
+{
+	const FName Rounds_Current = FName("Rounds_Current");
+	const FName Rounds_Max = FName("Rounds_Max");
+}
 
 void UShooterReticleWidget::NativeOnInitialized()
 {
 	Super::NativeOnInitialized();
+	
+	Image_Reticle->SetRenderOpacity(0.0f);
+	Image_AmmoCounter->SetRenderOpacity(0.0f);
 	
 	GetOwningPlayer()->OnPossessedPawnChanged.AddDynamic(this, &ThisClass::OnPossessedPawnChanged);
 	
@@ -29,7 +39,18 @@ void UShooterReticleWidget::NativeOnInitialized()
 	}
 	else
 	{
+		// 疑似 bug, if (!IsValid(ShooterCharacter)) { return; } 直接返回不会运行绑定代码
 		ShooterCharacter->OnWeaponFirstReplicated.AddDynamic(this, &ThisClass::OnWeaponFirstReplicated);
+	}
+	
+	if (ShooterCharacter->HasAuthority())
+	{
+		AWeapon* Weapon = IPlayerInterface::Execute_GetCurrentWeapon(ShooterCharacter);
+		if (IsValid(Weapon))
+		{
+			OnReticleChanged(Weapon->GetReticleDynamicMaterialInstance());
+			OnAmmoCounterChanged(Weapon->GetAmmoCounterDynamicMaterialInstance(), Weapon->GetAmmo(), Weapon->GetMagCapacity());
+		}
 	}
 }
 
@@ -40,9 +61,6 @@ void UShooterReticleWidget::NativeTick(const FGeometry& MyGeometry, float InDelt
 
 void UShooterReticleWidget::OnPossessedPawnChanged(APawn* OldPawn, APawn* NewPawn)
 {	
-	// 从 OldPawn CombatComponent 解绑委托
-	// 绑定在 NewPawn CombatComponent 里面的委托
-	
 	UCombatComponent* OldPawnComponent = UCombatComponent::FindCombatComponent(OldPawn);
 	if (IsValid(OldPawnComponent))
 	{
@@ -53,6 +71,9 @@ void UShooterReticleWidget::OnPossessedPawnChanged(APawn* OldPawn, APawn* NewPaw
 	UCombatComponent* NewPawnComponent = UCombatComponent::FindCombatComponent(NewPawn);
 	if (IsValid(NewPawnComponent))
 	{
+		Image_Reticle->SetRenderOpacity(1.0f);
+		Image_AmmoCounter->SetRenderOpacity(1.0f);
+		
 		NewPawnComponent->OnReticleChanged.AddDynamic(this, &ThisClass::OnReticleChanged);
 		NewPawnComponent->OnAmmoCounterChanged.AddDynamic(this, &ThisClass::OnAmmoCounterChanged);
 	}
@@ -66,11 +87,27 @@ void UShooterReticleWidget::OnWeaponFirstReplicated(AWeapon* Weapon)
 
 void UShooterReticleWidget::OnReticleChanged(UMaterialInstanceDynamic* ReticleDynamicMaterialInstance)
 {
-	// 将控件上的材质设置为动态材质实例
+	CurrentReticle_DynamicMaterialInstance = ReticleDynamicMaterialInstance;
+	
+	FSlateBrush Brush;
+	Brush.SetResourceObject(ReticleDynamicMaterialInstance);
+	if (IsValid(Image_Reticle))
+	{
+		Image_Reticle->SetBrush(Brush);
+	}
 }
 
 void UShooterReticleWidget::OnAmmoCounterChanged(UMaterialInstanceDynamic* AmmoCounterDynamicMaterialInstance,
 	int32 RoundsCurrent, int32 RoundsMax)
 {
-	// 将控件上的材质设置为动态材质实例
+	CurrentAmmoCounter_DynamicMaterialInstance = AmmoCounterDynamicMaterialInstance;
+	CurrentAmmoCounter_DynamicMaterialInstance->SetScalarParameterValue(Ammo::Rounds_Current, RoundsCurrent);
+	CurrentAmmoCounter_DynamicMaterialInstance->SetScalarParameterValue(Ammo::Rounds_Max, RoundsMax);
+	
+	FSlateBrush Brush;
+	Brush.SetResourceObject(AmmoCounterDynamicMaterialInstance);
+	if (IsValid(Image_AmmoCounter))
+	{
+		Image_AmmoCounter->SetBrush(Brush);
+	}
 }

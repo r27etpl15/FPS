@@ -168,6 +168,11 @@ void AShooterCharacter::PossessedBy(AController* NewController)
 	}
 }
 
+void AShooterCharacter::OnRep_PlayerState()
+{
+	Super::OnRep_PlayerState();
+}
+
 FName AShooterCharacter::GetWeaponAttachPoint_Implementation(const FGameplayTag& WeaponTypeTag) const
 {
 	checkf(CombatComponent->WeaponData, TEXT("没有Weapon Data Asset，请在角色类里面填写"));

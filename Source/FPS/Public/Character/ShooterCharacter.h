@@ -26,6 +26,7 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	virtual void PossessedBy(AController* NewController) override;
+	virtual void OnRep_PlayerState() override;
 	
 	//~ Begin UPlayerInterface Interface
 	virtual FName GetWeaponAttachPoint_Implementation(const FGameplayTag& WeaponTypeTag) const override;
