@@ -195,7 +195,7 @@ void AShooterCharacter::WeaponReplicated_Implementation()
 	if (!bWeaponFirstReplicated)
 	{
 		bWeaponFirstReplicated = true;
-		OnWeaponFirstReplicated.Broadcast(CombatComponent->GetCurrentWeapon());
+		OnWeaponFirstReplicated.Broadcast(CombatComponent->GetCurrentWeapon(), CombatComponent->IsHitPlayer());
 	}
 }
 

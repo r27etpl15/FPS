@@ -35,6 +35,7 @@ public:
 	UMaterialInstanceDynamic* GetReticleDynamicMaterialInstance();
 	UMaterialInstanceDynamic* GetAmmoCounterDynamicMaterialInstance();
 	FReticleParams GetReticleParams() const { return ReticleParams; }
+	int32 GetStartingCarriedAmmo() const { return StartingCarriedAmmo; }
 	
 	virtual void OnRep_Instigator() override;
 	

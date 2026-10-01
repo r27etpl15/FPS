@@ -39,6 +39,8 @@ void UShooterReticleWidget::NativeOnInitialized()
 	
 	AShooterCharacter* ShooterCharacter = Cast<AShooterCharacter>(GetOwningPlayer()->GetPawn());
 	if (!IsValid(ShooterCharacter)) { return; }
+	UCombatComponent* CombatComponent = UCombatComponent::FindCombatComponent(ShooterCharacter);
+	if (!IsValid(CombatComponent)) { return; }
 	
 	OnPossessedPawnChanged(nullptr, ShooterCharacter);
 	
@@ -47,7 +49,7 @@ void UShooterReticleWidget::NativeOnInitialized()
 		AWeapon* Weapon = IPlayerInterface::Execute_GetCurrentWeapon(ShooterCharacter);
 		if (IsValid(Weapon))
 		{
-			OnReticleChanged(Weapon->GetReticleDynamicMaterialInstance(), Weapon->GetReticleParams());
+			OnReticleChanged(Weapon->GetReticleDynamicMaterialInstance(), Weapon->GetReticleParams(), CombatComponent->IsHitPlayer());
 			OnAmmoCounterChanged(Weapon->GetAmmoCounterDynamicMaterialInstance(), Weapon->GetAmmo(), Weapon->GetMagCapacity());
 		}
 	}
@@ -62,7 +64,7 @@ void UShooterReticleWidget::NativeOnInitialized()
 		AWeapon* Weapon = IPlayerInterface::Execute_GetCurrentWeapon(ShooterCharacter);
 		if (IsValid(Weapon))
 		{
-			OnReticleChanged(Weapon->GetReticleDynamicMaterialInstance(), Weapon->GetReticleParams());
+			OnReticleChanged(Weapon->GetReticleDynamicMaterialInstance(), Weapon->GetReticleParams(), CombatComponent->IsHitPlayer());
 			OnAmmoCounterChanged(Weapon->GetAmmoCounterDynamicMaterialInstance(), Weapon->GetAmmo(), Weapon->GetMagCapacity());
 		}
 	}
@@ -139,9 +141,9 @@ void UShooterReticleWidget::OnPossessedPawnChanged(APawn* OldPawn, APawn* NewPaw
 	}
 }
 
-void UShooterReticleWidget::OnWeaponFirstReplicated(AWeapon* Weapon)
+void UShooterReticleWidget::OnWeaponFirstReplicated(AWeapon* Weapon, bool bCurrentlyTargetingPlayer)
 {
-	OnReticleChanged(Weapon->GetReticleDynamicMaterialInstance(), Weapon->GetReticleParams());
+	OnReticleChanged(Weapon->GetReticleDynamicMaterialInstance(), Weapon->GetReticleParams(), bCurrentlyTargetingPlayer);
 	OnAmmoCounterChanged(Weapon->GetAmmoCounterDynamicMaterialInstance(), Weapon->GetAmmo(), Weapon->GetMagCapacity());
 }
 

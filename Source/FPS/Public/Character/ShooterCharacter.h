@@ -13,7 +13,7 @@ class UCombatComponent;
 class UCameraComponent;
 class USpringArmComponent;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FWeaponFirstReplicated, AWeapon*, Weapon);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FWeaponFirstReplicated, AWeapon*, Weapon, bool, bCurrentlyTargetingPlayer);
 
 UCLASS()
 class FPS_API AShooterCharacter : public ACharacter, public IPlayerInterface

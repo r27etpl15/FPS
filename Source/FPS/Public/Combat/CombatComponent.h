@@ -3,10 +3,10 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 #include "Components/ActorComponent.h"
 #include "ShooterTypes/ShooterTypes.h"
 #include "CombatComponent.generated.h"
-
 
 class AWeapon;
 class UWeaponData;
@@ -17,6 +17,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FAmmoCounterChanged, UMaterialIns
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FRoundFired, int32, RoundsCurrent, int32, RoundsMax);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAimingStatusChanged, bool, bIsAiming);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FTargetingPlayerStatusChanged, bool, bIsAiming);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FCurrentReserveAmmoChanged, int32, RoundsInReserve, int32, RoundsInWeapon);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class FPS_API UCombatComponent : public UActorComponent
@@ -58,11 +59,16 @@ public:
 	UPROPERTY(BlueprintAssignable)
 	FTargetingPlayerStatusChanged OnTargetingPlayerStatusChanged;
 	
+	UPROPERTY(BlueprintAssignable)
+	FCurrentReserveAmmoChanged OnCurrentReserveAmmoChanged;
+	
 	void SpawnInventory();
 	void DestroyInventory();
 	void EquipWeapon(AWeapon* InWeapon);
 	
 	bool IsAiming() const { return bAiming; }
+	bool IsHitPlayer() const { return bHitPlayer; }
+	
 	AWeapon* GetCurrentWeapon() const { return CurrentWeapon; }
 	
 	void InitializeWeaponWidgets() const;
@@ -93,6 +99,14 @@ private:
 	UPROPERTY(BlueprintReadOnly, Replicated, meta=(AllowPrivateAccess = "true"))
 	bool bAiming = false;
 	
+	UPROPERTY(ReplicatedUsing=OnRep_CurrentReserveAmmo)
+	int32 CurrentReserveAmmo;
+	
+	TMap<FGameplayTag, int32> ReserveAmmo;
+	
+	void Local_Aim(bool bPressed);
+	void Local_FireWeapon();
+	
 	UFUNCTION()
 	void OnRep_CurrentWeapon(AWeapon* LastWeapon);
 	
@@ -113,6 +127,6 @@ private:
 	UFUNCTION(NetMulticast, Reliable)
 	void MultiCast_DryFire();
 	
-	void Local_Aim(bool bPressed);
-	void Local_FireWeapon();
+	UFUNCTION()
+	void OnRep_CurrentReserveAmmo();
 };

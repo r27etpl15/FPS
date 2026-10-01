@@ -84,6 +84,7 @@ void UCombatComponent::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty
 	DOREPLIFETIME(ThisClass, Inventory);
 	DOREPLIFETIME(ThisClass, CurrentWeapon);
 	DOREPLIFETIME_CONDITION(ThisClass, bAiming, COND_SkipOwner);
+	DOREPLIFETIME_CONDITION(ThisClass, CurrentReserveAmmo, COND_OwnerOnly);
 }
 
 void UCombatComponent::Initiate_CycleWeapon()
@@ -231,6 +232,7 @@ void UCombatComponent::SpawnInventory()
 	{
 		AWeapon* Weapon = SpawnWeapon(WeaponClass);
 		Inventory.AddUnique(Weapon);
+		ReserveAmmo.Add(Weapon->GetWeaponTypeTag(), Weapon->GetStartingCarriedAmmo());
 	}
 	
 	if (Inventory.Num() > 0)
@@ -255,6 +257,9 @@ void UCombatComponent::EquipWeapon(AWeapon* InWeapon)
 {
 	CurrentWeapon = InWeapon;
 	CurrentWeapon->AttachToOwningPawn();
+	
+	CurrentReserveAmmo = ReserveAmmo.FindChecked(CurrentWeapon->GetWeaponTypeTag());
+	OnCurrentReserveAmmoChanged.Broadcast(CurrentReserveAmmo, CurrentWeapon->GetAmmo());
 }
 
 void UCombatComponent::Local_Aim(bool bPressed)
@@ -277,6 +282,14 @@ AWeapon* UCombatComponent::SpawnWeapon(TSubclassOf<AWeapon> WeaponClass) const
 	SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 	
 	return GetWorld()->SpawnActor<AWeapon>(WeaponClass, SpawnParameters);
+}
+
+void UCombatComponent::OnRep_CurrentReserveAmmo()
+{
+	if (IsValid(CurrentWeapon))
+	{
+		OnCurrentReserveAmmoChanged.Broadcast(CurrentReserveAmmo, CurrentWeapon->GetAmmo());
+	}
 }
 
 void UCombatComponent::OnRep_CurrentWeapon(AWeapon* LastWeapon)
