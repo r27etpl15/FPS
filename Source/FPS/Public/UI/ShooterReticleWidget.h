@@ -40,8 +40,10 @@ private:
 	float BaseShapeCutFactor_RoundFired;
 	float BaseCornerScaleFactor_Aiming;
 	float BaseShapeCutFactor_Aiming;
+	float BaseCornerScaleFactor_TargetingPlayer;
 	
 	bool bAiming;
+	bool bTargetingPlayer;
 	
 	UFUNCTION()
 	void OnPossessedPawnChanged(APawn* OldPawn, APawn* NewPawn);
@@ -50,7 +52,7 @@ private:
 	void OnWeaponFirstReplicated(AWeapon* Weapon);
 	
 	UFUNCTION()
-	void OnReticleChanged(UMaterialInstanceDynamic* ReticleDynamicMaterialInstance, const FReticleParams& ReticleParams);
+	void OnReticleChanged(UMaterialInstanceDynamic* ReticleDynamicMaterialInstance, const FReticleParams& ReticleParams, bool bCurrentlyTargetingPlayer);
 	
 	UFUNCTION()
 	void OnAmmoCounterChanged(UMaterialInstanceDynamic* AmmoCounterDynamicMaterialInstance, int32 RoundsCurrent, int32 RoundsMax);
@@ -60,5 +62,8 @@ private:
 	
 	UFUNCTION()
 	void OnAimingStatusChanged(bool bIsAiming);
+	
+	UFUNCTION()
+	void OnTargetingPlayerStatusChanged(bool bIsTargetingPlayer);
 };
 

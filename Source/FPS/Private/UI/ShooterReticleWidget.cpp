@@ -18,6 +18,7 @@ namespace Reticle
 {
 	const FName RoundedCornerScale = FName("RoundedCornerScale");
 	const FName ShapeCutThickness = FName("ShapeCutThickness");
+	const FName Inner_RGBA = FName("Inner_RGBA");
 }
 
 void UShooterReticleWidget::NativeOnInitialized()
@@ -32,6 +33,7 @@ void UShooterReticleWidget::NativeOnInitialized()
 	BaseShapeCutFactor_Aiming = 0.0f;
 	
 	bAiming = false;
+	bTargetingPlayer = false;
 	
 	GetOwningPlayer()->OnPossessedPawnChanged.AddDynamic(this, &ThisClass::OnPossessedPawnChanged);
 	
@@ -94,8 +96,14 @@ void UShooterReticleWidget::NativeTick(const FGeometry& MyGeometry, float InDelt
 		InDeltaTime,
 		CurrentReticleParams.AimingInterpSpeed
 	);
+	BaseCornerScaleFactor_TargetingPlayer = FMath::FInterpTo(
+		BaseCornerScaleFactor_TargetingPlayer,
+		bTargetingPlayer ? CurrentReticleParams.ScaleFactor_Targeting : CurrentReticleParams.ScaleFactor_NotTargeting,
+		InDeltaTime,
+		CurrentReticleParams.TargetingPlayerInterpSpeed
+	);
 	
-	BaseCornerScaleFactor = BaseCornerScaleFactor_RoundFired + BaseCornerScaleFactor_Aiming;
+	BaseCornerScaleFactor = BaseCornerScaleFactor_RoundFired + BaseCornerScaleFactor_Aiming + BaseCornerScaleFactor_TargetingPlayer ;
 	BaseShapeCutFactor = BaseShapeCutFactor_RoundFired + BaseShapeCutFactor_Aiming;	
 	
 	if (CurrentReticle_DynamicMaterialInstance.IsValid())
@@ -114,6 +122,7 @@ void UShooterReticleWidget::OnPossessedPawnChanged(APawn* OldPawn, APawn* NewPaw
 		OldPawnComponent->OnAmmoCounterChanged.RemoveDynamic(this, &ThisClass::OnAmmoCounterChanged);
 		OldPawnComponent->OnRoundFired.RemoveDynamic(this, &ThisClass::OnRoundFired);
 		OldPawnComponent->OnAimingStatusChanged.RemoveDynamic(this, &ThisClass::OnAimingStatusChanged);
+		OldPawnComponent->OnTargetingPlayerStatusChanged.RemoveDynamic(this, &ThisClass::OnTargetingPlayerStatusChanged);
 	}
 	
 	UCombatComponent* NewPawnComponent = UCombatComponent::FindCombatComponent(NewPawn);
@@ -126,6 +135,7 @@ void UShooterReticleWidget::OnPossessedPawnChanged(APawn* OldPawn, APawn* NewPaw
 		NewPawnComponent->OnAmmoCounterChanged.AddDynamic(this, &ThisClass::OnAmmoCounterChanged);
 		NewPawnComponent->OnRoundFired.AddDynamic(this, &ThisClass::OnRoundFired);
 		NewPawnComponent->OnAimingStatusChanged.AddDynamic(this, &ThisClass::OnAimingStatusChanged);
+		NewPawnComponent->OnTargetingPlayerStatusChanged.AddDynamic(this, &ThisClass::OnTargetingPlayerStatusChanged);
 	}
 }
 
@@ -135,7 +145,8 @@ void UShooterReticleWidget::OnWeaponFirstReplicated(AWeapon* Weapon)
 	OnAmmoCounterChanged(Weapon->GetAmmoCounterDynamicMaterialInstance(), Weapon->GetAmmo(), Weapon->GetMagCapacity());
 }
 
-void UShooterReticleWidget::OnReticleChanged(UMaterialInstanceDynamic* ReticleDynamicMaterialInstance, const FReticleParams& ReticleParams)
+void UShooterReticleWidget::OnReticleChanged(UMaterialInstanceDynamic* ReticleDynamicMaterialInstance, const FReticleParams& ReticleParams
+	, bool bCurrentlyTargetingPlayer)
 {
 	CurrentReticleParams = ReticleParams;
 	CurrentReticle_DynamicMaterialInstance = ReticleDynamicMaterialInstance;
@@ -146,6 +157,8 @@ void UShooterReticleWidget::OnReticleChanged(UMaterialInstanceDynamic* ReticleDy
 	{
 		Image_Reticle->SetBrush(Brush);
 	}
+	
+	OnTargetingPlayerStatusChanged(bCurrentlyTargetingPlayer);
 }
 
 void UShooterReticleWidget::OnAmmoCounterChanged(UMaterialInstanceDynamic* AmmoCounterDynamicMaterialInstance,
@@ -178,4 +191,14 @@ void UShooterReticleWidget::OnRoundFired(int32 RoundsCurrent, int32 RoundsMax)
 void UShooterReticleWidget::OnAimingStatusChanged(bool bIsAiming)
 {
 	bAiming = bIsAiming;
+}
+
+void UShooterReticleWidget::OnTargetingPlayerStatusChanged(bool bIsTargetingPlayer)
+{
+	bTargetingPlayer = bIsTargetingPlayer;
+	if (CurrentReticle_DynamicMaterialInstance.IsValid())
+	{
+		FLinearColor ReticleColor = bTargetingPlayer ? FLinearColor::Red : FLinearColor::White;
+		CurrentReticle_DynamicMaterialInstance->SetVectorParameterValue(Reticle::Inner_RGBA, ReticleColor);
+	}
 }
