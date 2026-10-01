@@ -13,6 +13,7 @@ class UMaterialInstanceDynamic;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FReticleChanged, UMaterialInstanceDynamic*, ReticleDynamicInstance);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FAmmoCounterChanged, UMaterialInstanceDynamic*, AmmoCounterDynamicInstance, int32, RoundsCurrent, int32, RoundsMax);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FRoundFired, int32, RoundsCurrent, int32, RoundsMax);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class FPS_API UCombatComponent : public UActorComponent
@@ -44,6 +45,9 @@ public:
 	
 	UPROPERTY(BlueprintAssignable)
 	FAmmoCounterChanged OnAmmoCounterChanged;
+	
+	UPROPERTY(BlueprintAssignable)
+	FRoundFired OnRoundFired;
 	
 	void SpawnInventory();
 	void DestroyInventory();

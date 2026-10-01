@@ -66,6 +66,7 @@ void UShooterReticleWidget::OnPossessedPawnChanged(APawn* OldPawn, APawn* NewPaw
 	{
 		OldPawnComponent->OnReticleChanged.RemoveDynamic(this, &ThisClass::OnReticleChanged);
 		OldPawnComponent->OnAmmoCounterChanged.RemoveDynamic(this, &ThisClass::OnAmmoCounterChanged);
+		OldPawnComponent->OnRoundFired.RemoveDynamic(this, &ThisClass::OnRoundFired);
 	}
 	
 	UCombatComponent* NewPawnComponent = UCombatComponent::FindCombatComponent(NewPawn);
@@ -76,6 +77,7 @@ void UShooterReticleWidget::OnPossessedPawnChanged(APawn* OldPawn, APawn* NewPaw
 		
 		NewPawnComponent->OnReticleChanged.AddDynamic(this, &ThisClass::OnReticleChanged);
 		NewPawnComponent->OnAmmoCounterChanged.AddDynamic(this, &ThisClass::OnAmmoCounterChanged);
+		NewPawnComponent->OnRoundFired.AddDynamic(this, &ThisClass::OnRoundFired);
 	}
 }
 
@@ -109,5 +111,14 @@ void UShooterReticleWidget::OnAmmoCounterChanged(UMaterialInstanceDynamic* AmmoC
 	if (IsValid(Image_AmmoCounter))
 	{
 		Image_AmmoCounter->SetBrush(Brush);
+	}
+}
+
+void UShooterReticleWidget::OnRoundFired(int32 RoundsCurrent, int32 RoundsMax)
+{
+	if (CurrentAmmoCounter_DynamicMaterialInstance.IsValid())
+	{
+		CurrentAmmoCounter_DynamicMaterialInstance->SetScalarParameterValue(Ammo::Rounds_Current, RoundsCurrent);
+		CurrentAmmoCounter_DynamicMaterialInstance->SetScalarParameterValue(Ammo::Rounds_Max, RoundsMax);
 	}
 }
