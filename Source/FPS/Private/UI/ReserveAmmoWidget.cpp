@@ -35,6 +35,15 @@ void UReserveAmmoWidget::NativeOnInitialized()
 	{
 		ShooterCharacter->OnWeaponFirstReplicated.AddDynamic(this, &ThisClass::OnWeaponFirstReplicated);
 	}
+	
+	if (ShooterCharacter->HasAuthority())
+	{
+		AWeapon* Weapon = IPlayerInterface::Execute_GetCurrentWeapon(ShooterCharacter);
+		if (IsValid(Weapon))
+		{
+			OnCurrentReserveAmmoChanged(IPlayerInterface::Execute_GetReserveAmmo(ShooterCharacter), Weapon->GetAmmo());
+		}
+	}
 }
 
 void UReserveAmmoWidget::OnPossessedPawnChanged(APawn* OldPawn, APawn* NewPawn)
@@ -43,7 +52,7 @@ void UReserveAmmoWidget::OnPossessedPawnChanged(APawn* OldPawn, APawn* NewPawn)
 	if (IsValid(OldPawnComponent))
 	{
 		OldPawnComponent->OnCurrentReserveAmmoChanged.RemoveDynamic(this, &ThisClass::OnCurrentReserveAmmoChanged);
-		OldPawnComponent->OnRoundFired.RemoveDynamic(this, &ThisClass::UReserveAmmoWidget::OnRoundFired);
+		OldPawnComponent->OnRoundFired.RemoveDynamic(this, &ThisClass::OnRoundFired);
 	}
 	
 	UCombatComponent* NewPawnComponent = UCombatComponent::FindCombatComponent(NewPawn);
@@ -52,8 +61,8 @@ void UReserveAmmoWidget::OnPossessedPawnChanged(APawn* OldPawn, APawn* NewPawn)
 		Image_WeaponIcon->SetRenderOpacity(1.0f);
 		Text_Ammo->SetRenderOpacity(1.0f);
 		
-		OldPawnComponent->OnCurrentReserveAmmoChanged.AddDynamic(this, &ThisClass::OnCurrentReserveAmmoChanged);
-		OldPawnComponent->OnRoundFired.AddDynamic(this, &ThisClass::UReserveAmmoWidget::OnRoundFired);
+		NewPawnComponent->OnCurrentReserveAmmoChanged.AddDynamic(this, &ThisClass::OnCurrentReserveAmmoChanged);
+		NewPawnComponent->OnRoundFired.AddDynamic(this, &ThisClass::OnRoundFired);
 	}
 }
 
@@ -63,7 +72,7 @@ void UReserveAmmoWidget::OnCurrentReserveAmmoChanged(int32 RoundsInReserve, int3
 	
 	if (IsValid(Text_Ammo))
 	{
-		FText AmmoText = FText::Format(NSLOCTEXT("AmmoText", "AmmoKey", "{0}/{1}"), RoundsInWeapon, RoundsInReserve);
+		FText AmmoText = FText::Format(NSLOCTEXT("AmmoText", "AmmoKey", "{0} / {1}"), RoundsInWeapon, RoundsInReserve);
 		Text_Ammo->SetText(AmmoText);
 	}
 }
@@ -72,7 +81,7 @@ void UReserveAmmoWidget::OnRoundFired(int32 RoundsCurrent, int32 RoundsMax, int3
 {
 	if (IsValid(Text_Ammo))
 	{
-		FText AmmoText = FText::Format(NSLOCTEXT("AmmoText", "AmmoKey", "{0}/{1}"), RoundsCurrent, RoundsInReserve);
+		FText AmmoText = FText::Format(NSLOCTEXT("AmmoText", "AmmoKey", "{0} / {1}"), RoundsCurrent, RoundsInReserve);
 		Text_Ammo->SetText(AmmoText);
 	}
 }
