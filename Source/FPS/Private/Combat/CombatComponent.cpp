@@ -185,7 +185,7 @@ void UCombatComponent::Local_FireWeapon()
 	EPhysicalSurface ImpactSurfaceType = HitResult.PhysMaterial.IsValid(false) ? HitResult.PhysMaterial->SurfaceType.GetValue() : SurfaceType1;
 	CurrentWeapon->Local_Fire(HitResult.ImpactPoint, HitResult.ImpactNormal, ImpactSurfaceType, true);
 	
-	OnRoundFired.Broadcast(CurrentWeapon->GetAmmo(), CurrentWeapon->GetMagCapacity());
+	OnRoundFired.Broadcast(CurrentWeapon->GetAmmo(), CurrentWeapon->GetMagCapacity(), CurrentReserveAmmo);
 	
 	GetWorld()->GetTimerManager().SetTimer(FireTimer, this, &ThisClass::FireTimerFinished, CurrentWeapon->GetFireTime());
 	

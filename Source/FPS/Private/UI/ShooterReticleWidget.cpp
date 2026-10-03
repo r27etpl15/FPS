@@ -55,7 +55,6 @@ void UShooterReticleWidget::NativeOnInitialized()
 	}
 	else
 	{
-		// 疑似 bug, if (!IsValid(ShooterCharacter)) { return; } 直接返回不会运行绑定代码
 		ShooterCharacter->OnWeaponFirstReplicated.AddDynamic(this, &ThisClass::OnWeaponFirstReplicated);
 	}
 	
@@ -178,7 +177,7 @@ void UShooterReticleWidget::OnAmmoCounterChanged(UMaterialInstanceDynamic* AmmoC
 	}
 }
 
-void UShooterReticleWidget::OnRoundFired(int32 RoundsCurrent, int32 RoundsMax)
+void UShooterReticleWidget::OnRoundFired(int32 RoundsCurrent, int32 RoundsMax, int32 RoundsInReserve)
 {
 	BaseCornerScaleFactor_RoundFired += CurrentReticleParams.ScaleFactor_RoundFired;
 	BaseShapeCutFactor_RoundFired += CurrentReticleParams.ShapeCutFactor_RoundFired;

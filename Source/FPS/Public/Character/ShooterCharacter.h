@@ -34,6 +34,7 @@ public:
 	virtual USkeletalMeshComponent* GetMesh3P_Implementation() const override;
 	virtual void WeaponReplicated_Implementation() override;
 	virtual AWeapon* GetCurrentWeapon_Implementation() const override;
+	virtual int32 GetReserveAmmo_Implementation() const override;
 	//~ End UPlayerInterface Interface
 	
 	bool HasWeaponFirstReplicated() const { return bWeaponFirstReplicated; }
