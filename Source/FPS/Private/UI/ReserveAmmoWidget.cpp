@@ -28,7 +28,7 @@ void UReserveAmmoWidget::NativeOnInitialized()
 		AWeapon* Weapon = IPlayerInterface::Execute_GetCurrentWeapon(ShooterCharacter);
 		if (IsValid(Weapon))
 		{
-			OnCurrentReserveAmmoChanged(IPlayerInterface::Execute_GetReserveAmmo(ShooterCharacter), Weapon->GetAmmo());
+			OnCurrentReserveAmmoChanged(IPlayerInterface::Execute_GetReserveAmmo(ShooterCharacter), Weapon->GetAmmo(), Weapon->GetWeaponIcon());
 		}
 	}
 	else
@@ -41,7 +41,7 @@ void UReserveAmmoWidget::NativeOnInitialized()
 		AWeapon* Weapon = IPlayerInterface::Execute_GetCurrentWeapon(ShooterCharacter);
 		if (IsValid(Weapon))
 		{
-			OnCurrentReserveAmmoChanged(IPlayerInterface::Execute_GetReserveAmmo(ShooterCharacter), Weapon->GetAmmo());
+			OnCurrentReserveAmmoChanged(IPlayerInterface::Execute_GetReserveAmmo(ShooterCharacter), Weapon->GetAmmo(), Weapon->GetWeaponIcon());
 		}
 	}
 }
@@ -66,8 +66,18 @@ void UReserveAmmoWidget::OnPossessedPawnChanged(APawn* OldPawn, APawn* NewPawn)
 	}
 }
 
-void UReserveAmmoWidget::OnCurrentReserveAmmoChanged(int32 RoundsInReserve, int32 RoundsInWeapon)
+void UReserveAmmoWidget::OnCurrentReserveAmmoChanged(int32 RoundsInReserve, int32 RoundsInWeapon, UMaterialInterface* WeaponIconMaterial)
 {
+	if (IsValid(WeaponIconMaterial))
+	{
+		FSlateBrush Brush;
+		Brush.SetResourceObject(WeaponIconMaterial);
+		if (IsValid(Image_WeaponIcon))
+		{
+			Image_WeaponIcon->SetBrush(Brush);
+		}
+	}
+	
 	// 当前弹匣弹药数 / 备用弹药数（剩余弹药数）
 	
 	if (IsValid(Text_Ammo))
@@ -91,5 +101,5 @@ void UReserveAmmoWidget::OnWeaponFirstReplicated(AWeapon* Weapon, bool bCurrentl
 	AShooterCharacter* ShooterCharacter = Cast<AShooterCharacter>(GetOwningPlayer()->GetPawn());
 	if (!IsValid(ShooterCharacter)) { return; }
 	
-	OnCurrentReserveAmmoChanged(IPlayerInterface::Execute_GetReserveAmmo(ShooterCharacter), Weapon->GetAmmo());
+	OnCurrentReserveAmmoChanged(IPlayerInterface::Execute_GetReserveAmmo(ShooterCharacter), Weapon->GetAmmo(), Weapon->GetWeaponIcon());
 }
