@@ -17,6 +17,16 @@ enum class EFireType : uint8
 	SemiAuto
 };
 
+UENUM(BlueprintType)
+enum class EWeaponStatus : uint8
+{
+	Idle,	// 武器待机状态，可开火 / 换弹 / 循环切换武器
+	Firing,
+	Reloading,
+	Cycling,
+	Unequipped
+};
+
 UCLASS()
 class FPS_API AWeapon : public AActor
 {
@@ -36,10 +46,12 @@ public:
 	UMaterialInstanceDynamic* GetAmmoCounterDynamicMaterialInstance();
 	FReticleParams GetReticleParams() const { return ReticleParams; }
 	int32 GetStartingCarriedAmmo() const { return StartingCarriedAmmo; }
+	UMaterialInterface* GetWeaponIcon() const { return WeaponIcon; }
+	EWeaponStatus GetWeaponStatus() const { return WeaponStatus; }
 	
-	virtual void OnRep_Instigator() override;
+	void SetWeaponStatus(const EWeaponStatus InWeaponStatus) { WeaponStatus = InWeaponStatus; }
 	
-	void AttachToOwningPawn() const;
+	void AttachToOwningPawn(APawn* Pawn) const;
 	void WeaponTrace(FHitResult& OutHit, float TraceLength);
 	void Local_Fire(const FVector& ImpactPoint, const FVector& ImpactNormal, TEnumAsByte<EPhysicalSurface> ImpactSurfaceType, bool bIsFirstPerson);
 	void Auth_Fire();
@@ -99,11 +111,16 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category="FPS|Reticle")
 	FReticleParams ReticleParams;
 	
+	UPROPERTY(EditDefaultsOnly, Category="FPS|Icon")
+	TObjectPtr<UMaterialInterface> WeaponIcon;
+	
 	UPROPERTY()
 	TObjectPtr<UMaterialInstanceDynamic> DynamicMaterialInstance_Reticle;
 	
 	UPROPERTY()
 	TObjectPtr<UMaterialInstanceDynamic> DynamicMaterialInstance_AmmoCounter;
+	
+	EWeaponStatus WeaponStatus = EWeaponStatus::Unequipped;
 	
 	int32 Sequence = 0;
 	

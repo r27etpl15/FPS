@@ -17,7 +17,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FAmmoCounterChanged, UMaterialIns
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FRoundFired, int32, RoundsCurrent, int32, RoundsMax, int32, RoundsInReserve);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAimingStatusChanged, bool, bIsAiming);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FTargetingPlayerStatusChanged, bool, bIsAiming);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FCurrentReserveAmmoChanged, int32, RoundsInReserve, int32, RoundsInWeapon);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FCurrentReserveAmmoChanged, int32, RoundsInReserve, int32, RoundsInWeapon, UMaterialInterface*, WeaponIconMaterial);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class FPS_API UCombatComponent : public UActorComponent
@@ -104,11 +104,13 @@ private:
 	
 	TMap<FGameplayTag, int32> ReserveAmmo;
 	
+	int32 Local_WeaponIndex = 0;
+	
 	void Local_Aim(bool bPressed);
 	void Local_FireWeapon();
+	void Local_CycleWeapon(int32 WeaponIndex);
 	
-	UFUNCTION()
-	void OnRep_CurrentWeapon(AWeapon* LastWeapon);
+	int32 AdvanceWeaponIndex();
 	
 	AWeapon* SpawnWeapon(TSubclassOf<AWeapon> WeaponClass) const;
 	
@@ -121,11 +123,20 @@ private:
 	UFUNCTION(Server, Reliable)
 	void Server_DryFire();
 	
+	UFUNCTION(Server, Reliable)
+	void Server_CycleWeapon(int32 WeaponIndex);
+	
 	UFUNCTION(NetMulticast, Reliable)
 	void MultiCast_FireWeapon(const FHitResult& HitResult, int32 AuthAmmo);
 	
 	UFUNCTION(NetMulticast, Reliable)
 	void MultiCast_DryFire();
+	
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiCast_CycleWeapon(int32 WeaponIndex);
+	
+	UFUNCTION()
+	void OnRep_CurrentWeapon(AWeapon* LastWeapon);
 	
 	UFUNCTION()
 	void OnRep_CurrentReserveAmmo();
