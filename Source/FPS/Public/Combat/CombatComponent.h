@@ -64,6 +64,7 @@ public:
 	
 	void SpawnInventory();
 	void DestroyInventory();
+	void Equip(AWeapon* InWeapon);
 	void EquipWeapon(AWeapon* InWeapon);
 	
 	bool IsAiming() const { return bAiming; }
@@ -73,15 +74,18 @@ public:
 	
 	void InitializeWeaponWidgets() const;
 	
+	void Notify_CycleWeapon();
+	
 protected:
 	virtual void BeginPlay() override;
+	
+	UFUNCTION()
+	void BlendOut_CycleWeapon(UAnimMontage* Montage, bool bInterrupted);
 	
 	UPROPERTY(EditDefaultsOnly, Category="FPS|Weapon")
 	float TraceLength = 20000;
 	
 private:
-	void FireTimerFinished();
-	
 	bool bTriggerPressed = false;
 	bool bHitPlayer = false;
 	bool bHitPlayerLastFrame = false;
@@ -106,6 +110,10 @@ private:
 	
 	int32 Local_WeaponIndex = 0;
 	
+	void FireTimerFinished();
+	
+	void SetCurrentWeapon(AWeapon* NewWeapon, AWeapon* LastWeapon);
+	
 	void Local_Aim(bool bPressed);
 	void Local_FireWeapon();
 	void Local_CycleWeapon(int32 WeaponIndex);
@@ -125,6 +133,9 @@ private:
 	
 	UFUNCTION(Server, Reliable)
 	void Server_CycleWeapon(int32 WeaponIndex);
+	
+	UFUNCTION(Server, Reliable)
+	void Server_EquipWeapon(AWeapon* InWeapon);
 	
 	UFUNCTION(NetMulticast, Reliable)
 	void MultiCast_FireWeapon(const FHitResult& HitResult, int32 AuthAmmo);
