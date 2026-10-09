@@ -50,6 +50,7 @@ public:
 	EWeaponStatus GetWeaponStatus() const { return WeaponStatus; }
 	
 	void SetWeaponStatus(const EWeaponStatus InWeaponStatus) { WeaponStatus = InWeaponStatus; }
+	void SetAmmo(const int32 InAmmo) { Ammo = InAmmo; }
 	
 	void AttachToOwningPawn(APawn* Pawn) const;
 	void DetachFromOwningPawn();

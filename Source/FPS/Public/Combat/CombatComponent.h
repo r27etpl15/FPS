@@ -75,6 +75,7 @@ public:
 	void InitializeWeaponWidgets() const;
 	
 	void Notify_CycleWeapon();
+	void Notify_ReloadWeapon();
 	
 protected:
 	virtual void BeginPlay() override;
@@ -141,6 +142,9 @@ private:
 	UFUNCTION(Server, Reliable)
 	void Server_ReloadWeapon();
 	
+	UFUNCTION(Client, Reliable)
+	void Client_ReloadWeapon(int32 NewWeaponAmmo, int32 NewCarriedAmmo);
+	
 	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_FireWeapon(const FHitResult& HitResult, int32 AuthAmmo);
 	
@@ -151,7 +155,7 @@ private:
 	void Multicast_CycleWeapon(int32 WeaponIndex);
 	
 	UFUNCTION(NetMulticast, Reliable)
-	void Multicast_ReloadWeapon(int32 NewWeaponAmmo, int32 NewCarriedAmmo);
+	void Multicast_ReloadWeapon();
 	
 	UFUNCTION()
 	void OnRep_CurrentWeapon(AWeapon* LastWeapon);

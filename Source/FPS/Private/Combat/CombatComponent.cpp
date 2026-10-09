@@ -150,6 +150,44 @@ void UCombatComponent::Notify_CycleWeapon()
 	}
 }
 
+void UCombatComponent::Notify_ReloadWeapon()
+{
+	if (!IsValid(CurrentWeapon)) { return; }
+	
+	if (GetNetMode() == NM_ListenServer || GetNetMode() == NM_DedicatedServer || GetNetMode() == NM_Standalone)
+	{
+		// 实际装填
+		const int32 EmptySpace = CurrentWeapon->GetMagCapacity() - CurrentWeapon->GetAmmo();
+		const int32 AmountToReFill = FMath::Min(EmptySpace, CurrentReserveAmmo);
+		CurrentWeapon->SetAmmo(CurrentWeapon->GetAmmo() + AmountToReFill);
+		ReserveAmmo[CurrentWeapon->GetWeaponTypeTag()] = ReserveAmmo[CurrentWeapon->GetWeaponTypeTag()] - AmountToReFill;
+		CurrentReserveAmmo = ReserveAmmo[CurrentWeapon->GetWeaponTypeTag()];
+		
+		Client_ReloadWeapon(CurrentWeapon->GetAmmo(), CurrentReserveAmmo);
+	}
+	
+	CurrentWeapon->SetWeaponStatus(EWeaponStatus::Idle);
+	if (bTriggerPressed && CurrentWeapon->GetAmmo() > 0)
+	{
+		Local_FireWeapon();
+	}
+}
+
+void UCombatComponent::Client_ReloadWeapon_Implementation(int32 NewWeaponAmmo, int32 NewCarriedAmmo)
+{ 
+	APawn* OwningPawn = Cast<APawn>(GetOwner());
+	if (!IsValid(CurrentWeapon) || !IsValid(OwningPawn)) { return; }
+	
+	if (OwningPawn->IsLocallyControlled())
+	{
+		CurrentWeapon->SetAmmo(NewWeaponAmmo);
+		CurrentReserveAmmo = NewCarriedAmmo;
+		
+		OnAmmoCounterChanged.Broadcast(CurrentWeapon->GetAmmoCounterDynamicMaterialInstance(), CurrentWeapon->GetAmmo(), CurrentWeapon->GetMagCapacity());
+		OnCurrentReserveAmmoChanged.Broadcast(CurrentReserveAmmo, CurrentWeapon->GetAmmo(), CurrentWeapon->GetWeaponIcon());
+	}
+}
+
 void UCombatComponent::BlendOut_CycleWeapon(UAnimMontage* Montage, bool bInterrupted)
 {
 	UAnimInstance* AnimInstance = IPlayerInterface::Execute_GetMesh1P(GetOwner())->GetAnimInstance();
@@ -347,10 +385,10 @@ void UCombatComponent::Local_ReloadWeapon()
 
 void UCombatComponent::Server_ReloadWeapon_Implementation()
 {
-	Multicast_ReloadWeapon(CurrentWeapon->GetAmmo(), CurrentReserveAmmo);
+	Multicast_ReloadWeapon();
 }
 
-void UCombatComponent::Multicast_ReloadWeapon_Implementation(int32 NewWeaponAmmo, int32 NewCarriedAmmo)
+void UCombatComponent::Multicast_ReloadWeapon_Implementation()
 {
 	if (!Cast<APawn>(GetOwner())->IsLocallyControlled())
 	{
