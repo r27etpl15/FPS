@@ -124,10 +124,10 @@ void UCombatComponent::Local_CycleWeapon(int32 WeaponIndex)
 void UCombatComponent::Server_CycleWeapon_Implementation(int32 WeaponIndex)
 {
 	Local_WeaponIndex = WeaponIndex;
-	MultiCast_CycleWeapon(WeaponIndex);
+	Multicast_CycleWeapon(WeaponIndex);
 }
 
-void UCombatComponent::MultiCast_CycleWeapon_Implementation(int32 WeaponIndex)
+void UCombatComponent::Multicast_CycleWeapon_Implementation(int32 WeaponIndex)
 {
 	APawn* OwningPawn = Cast<APawn>(GetOwner());
 	if (!IsValid(OwningPawn)) { return; }
@@ -198,16 +198,17 @@ void UCombatComponent::Initiate_FireWeaponReleased()
 void UCombatComponent::Server_FireWeapon_Implementation(const FHitResult& HitResult)
 {
 	if (!IsValid(CurrentWeapon)) { return; }
+	if (CurrentWeapon->GetAmmo() <= 0) { return; }
 	
 	if (GetNetMode() != NM_ListenServer || !Cast<APawn>(GetOwner())->IsLocallyControlled())
 	{
 		CurrentWeapon->Auth_Fire();
 	}
 	
-	MultiCast_FireWeapon(HitResult, CurrentWeapon->GetAmmo());
+	Multicast_FireWeapon(HitResult, CurrentWeapon->GetAmmo());
 }
 
-void UCombatComponent::MultiCast_FireWeapon_Implementation(const FHitResult& HitResult, int32 AuthAmmo)
+void UCombatComponent::Multicast_FireWeapon_Implementation(const FHitResult& HitResult, int32 AuthAmmo)
 {
 	APawn* OwningPawn = Cast<APawn>(GetOwner());
 	if (OwningPawn->IsLocallyControlled())
@@ -233,10 +234,10 @@ void UCombatComponent::MultiCast_FireWeapon_Implementation(const FHitResult& Hit
 
 void UCombatComponent::Server_DryFire_Implementation()
 {
-	MultiCast_DryFire();
+	Multicast_DryFire();
 }
 
-void UCombatComponent::MultiCast_DryFire_Implementation()
+void UCombatComponent::Multicast_DryFire_Implementation()
 {
 	if (!IsValid(CurrentWeapon)) { return; }
 	
@@ -307,7 +308,54 @@ void UCombatComponent::FireTimerFinished()
 
 void UCombatComponent::Initiate_ReloadWeapon()
 {
-	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, TEXT("ReloadWeapon"));
+	if (!IsValid(CurrentWeapon)) { return; }
+	if (CurrentWeapon->GetWeaponStatus() == EWeaponStatus::Cycling || CurrentWeapon->GetWeaponStatus() == EWeaponStatus::Reloading) { return; }
+	if (CurrentWeapon->GetAmmo() == CurrentWeapon->GetMagCapacity()) { return; }
+	if (CurrentReserveAmmo == 0) { return; }
+	
+	Local_ReloadWeapon();
+	Server_ReloadWeapon();
+}
+
+void UCombatComponent::Local_ReloadWeapon()
+{
+	APawn* OwningPawn = Cast<APawn>(GetOwner());
+	if (!IsValid(CurrentWeapon) || !IsValid(OwningPawn)) { return; }
+	ensure(WeaponData);
+	
+	const bool bIsLocal = OwningPawn->IsLocallyControlled();
+	
+	// 播放角色蒙太奇
+	UAnimMontage* ReloadMontage = bIsLocal ? WeaponData->FirstPersonMontages.FindChecked(CurrentWeapon->GetWeaponTypeTag()).ReloadMontage
+		: WeaponData->ThirdPersonMontages.FindChecked(CurrentWeapon->GetWeaponTypeTag()).ReloadMontage;
+	USkeletalMeshComponent* MeshComponent = bIsLocal ? IPlayerInterface::Execute_GetMesh1P(OwningPawn) : IPlayerInterface::Execute_GetMesh3P(OwningPawn);
+	if (IsValid(ReloadMontage) && IsValid(MeshComponent))
+	{
+		MeshComponent->GetAnimInstance()->Montage_Play(ReloadMontage);
+	}
+	
+	// 播放武器蒙太奇
+	UAnimMontage* WeaponReloadMontage = WeaponData->WeaponMontages.FindChecked(CurrentWeapon->GetWeaponTypeTag()).ReloadMontage;
+	USkeletalMeshComponent* WeaponMeshComponent = bIsLocal ? CurrentWeapon->GetMesh1P() : CurrentWeapon->GetMesh3P();
+	if (IsValid(WeaponReloadMontage) && IsValid(WeaponMeshComponent))
+	{
+		WeaponMeshComponent->GetAnimInstance()->Montage_Play(WeaponReloadMontage);
+	}
+	
+	CurrentWeapon->SetWeaponStatus(EWeaponStatus::Reloading);
+}
+
+void UCombatComponent::Server_ReloadWeapon_Implementation()
+{
+	Multicast_ReloadWeapon(CurrentWeapon->GetAmmo(), CurrentReserveAmmo);
+}
+
+void UCombatComponent::Multicast_ReloadWeapon_Implementation(int32 NewWeaponAmmo, int32 NewCarriedAmmo)
+{
+	if (!Cast<APawn>(GetOwner())->IsLocallyControlled())
+	{
+		Local_ReloadWeapon();
+	}
 }
 
 void UCombatComponent::Initiate_AimPressed()

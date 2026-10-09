@@ -117,6 +117,7 @@ private:
 	void Local_Aim(bool bPressed);
 	void Local_FireWeapon();
 	void Local_CycleWeapon(int32 WeaponIndex);
+	void Local_ReloadWeapon();
 	
 	int32 AdvanceWeaponIndex();
 	
@@ -137,14 +138,20 @@ private:
 	UFUNCTION(Server, Reliable)
 	void Server_EquipWeapon(AWeapon* InWeapon);
 	
-	UFUNCTION(NetMulticast, Reliable)
-	void MultiCast_FireWeapon(const FHitResult& HitResult, int32 AuthAmmo);
+	UFUNCTION(Server, Reliable)
+	void Server_ReloadWeapon();
 	
 	UFUNCTION(NetMulticast, Reliable)
-	void MultiCast_DryFire();
+	void Multicast_FireWeapon(const FHitResult& HitResult, int32 AuthAmmo);
 	
 	UFUNCTION(NetMulticast, Reliable)
-	void MultiCast_CycleWeapon(int32 WeaponIndex);
+	void Multicast_DryFire();
+	
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_CycleWeapon(int32 WeaponIndex);
+	
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_ReloadWeapon(int32 NewWeaponAmmo, int32 NewCarriedAmmo);
 	
 	UFUNCTION()
 	void OnRep_CurrentWeapon(AWeapon* LastWeapon);
