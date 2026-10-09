@@ -77,6 +77,8 @@ public:
 	void Notify_CycleWeapon();
 	void Notify_ReloadWeapon();
 	
+	void AddAmmo(const FGameplayTag& WeaponType, int32 AmmoAmount);
+	
 protected:
 	virtual void BeginPlay() override;
 	

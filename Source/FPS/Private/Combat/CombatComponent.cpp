@@ -173,6 +173,27 @@ void UCombatComponent::Notify_ReloadWeapon()
 	}
 }
 
+void UCombatComponent::AddAmmo(const FGameplayTag& WeaponType, int32 AmmoAmount)
+{
+	if (GetOwner()->HasAuthority() && !IsValid(CurrentWeapon)) { return; }
+	
+	if (!ReserveAmmo.Contains(WeaponType))
+	{
+		ReserveAmmo.Add(WeaponType, AmmoAmount);
+	}
+	
+	const int32 NewAmmo = ReserveAmmo.FindChecked(WeaponType) + AmmoAmount;
+	ReserveAmmo[WeaponType] = NewAmmo;
+	
+	if (CurrentWeapon->GetWeaponTypeTag().MatchesTagExact(WeaponType))
+	{
+		CurrentReserveAmmo = NewAmmo;
+		
+		OnAmmoCounterChanged.Broadcast(CurrentWeapon->GetAmmoCounterDynamicMaterialInstance(), CurrentWeapon->GetAmmo(), CurrentWeapon->GetMagCapacity());
+		OnCurrentReserveAmmoChanged.Broadcast(CurrentReserveAmmo, CurrentWeapon->GetAmmo(), CurrentWeapon->GetWeaponIcon());
+	}
+}
+
 void UCombatComponent::Client_ReloadWeapon_Implementation(int32 NewWeaponAmmo, int32 NewCarriedAmmo)
 { 
 	APawn* OwningPawn = Cast<APawn>(GetOwner());
