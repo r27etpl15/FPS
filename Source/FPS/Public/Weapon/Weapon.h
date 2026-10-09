@@ -121,7 +121,7 @@ private:
 	UPROPERTY()
 	TObjectPtr<UMaterialInstanceDynamic> DynamicMaterialInstance_AmmoCounter;
 	
-	EWeaponStatus WeaponStatus = EWeaponStatus::Unequipped;
+	EWeaponStatus WeaponStatus = EWeaponStatus::Idle;
 	
 	int32 Sequence = 0;
 	

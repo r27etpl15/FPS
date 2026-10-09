@@ -148,13 +148,6 @@ void UCombatComponent::Notify_CycleWeapon()
 	{
 		EquipWeapon(NewWeapon);
 	}
-	
-	GEngine->AddOnScreenDebugMessage(
-		-1,
-		5.0f,
-		FColor::Cyan,
-		TEXT("Notify_CycleWeapon")
-	);
 }
 
 void UCombatComponent::BlendOut_CycleWeapon(UAnimMontage* Montage, bool bInterrupted)
@@ -167,12 +160,16 @@ void UCombatComponent::BlendOut_CycleWeapon(UAnimMontage* Montage, bool bInterru
 	
 	CurrentWeapon->SetWeaponStatus(EWeaponStatus::Idle);
 	
-	GEngine->AddOnScreenDebugMessage(
-		-1,
-		5.0f,
-		FColor::Yellow,
-		TEXT("BlendOut_CycleWeapon")
-	);
+	// 只需要在本地更新 UI
+	OnReticleChanged.Broadcast(CurrentWeapon->GetReticleDynamicMaterialInstance(), CurrentWeapon->GetReticleParams(), bHitPlayer);
+	OnAmmoCounterChanged.Broadcast(CurrentWeapon->GetAmmoCounterDynamicMaterialInstance(), CurrentWeapon->GetAmmo(), CurrentWeapon->GetMagCapacity());
+	OnCurrentReserveAmmoChanged.Broadcast(CurrentReserveAmmo, CurrentWeapon->GetAmmo(), CurrentWeapon->GetWeaponIcon());
+	
+	// 切换武器后按着开火键，并且是自动武器就直接射击
+	if (bTriggerPressed && CurrentWeapon->GetFireType() == EFireType::Auto && CurrentWeapon->GetAmmo() > 0)
+	{
+		Local_FireWeapon();
+	}
 }
 
 void UCombatComponent::Initiate_FireWeaponPressed()
@@ -181,11 +178,11 @@ void UCombatComponent::Initiate_FireWeaponPressed()
 	
 	bTriggerPressed = true;
 	
-	if (CurrentWeapon->GetAmmo() > 0)
+	if (CurrentWeapon->GetWeaponStatus() == EWeaponStatus::Idle && CurrentWeapon->GetAmmo() > 0)
 	{
 		Local_FireWeapon();	
 	}
-	else
+	else if (CurrentWeapon->GetWeaponStatus() == EWeaponStatus::Idle)
 	{
 		CurrentWeapon->OnDryFire(true);
 		
@@ -254,6 +251,8 @@ void UCombatComponent::Local_FireWeapon()
 	if (!IsValid(CurrentWeapon)) { return; }
 	ensure(IsValid(WeaponData));
 	
+	CurrentWeapon->SetWeaponStatus(EWeaponStatus::Firing);
+	
 	UAnimMontage* Montage1P = WeaponData->FirstPersonMontages.FindChecked(CurrentWeapon->GetWeaponTypeTag()).FireMontage;
 	USkeletalMeshComponent* Mesh1P = IPlayerInterface::Execute_GetMesh1P(GetOwner());
 	if (IsValid(Montage1P) && IsValid(Mesh1P))
@@ -289,9 +288,20 @@ void UCombatComponent::FireTimerFinished()
 {
 	if (!IsValid(CurrentWeapon)) { return; }
 	
+	if (CurrentWeapon->GetWeaponStatus() == EWeaponStatus::Firing)
+	{
+		CurrentWeapon->SetWeaponStatus(EWeaponStatus::Idle);
+	}
+	
 	if (bTriggerPressed && CurrentWeapon->GetFireType() == EFireType::Auto && CurrentWeapon->GetAmmo() > 0)
 	{
 		Local_FireWeapon();
+	}
+	else if (bTriggerPressed && CurrentWeapon->GetFireType() == EFireType::Auto && CurrentWeapon->GetAmmo() == 0)
+	{
+		CurrentWeapon->OnDryFire(true);
+		
+		Server_DryFire();
 	}
 }
 
