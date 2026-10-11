@@ -7,6 +7,7 @@
 #include "HealthComponent.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FHealthChanged, UHealthComponent*, HealthComponent, float, OldValue, float, NewValue, AActor*, Instigator);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FDeathStarted);
 
 UENUM(BlueprintType)
 enum class EDeathState : uint8 
@@ -46,6 +47,9 @@ public:
 	UPROPERTY(BlueprintAssignable)
 	FHealthChanged OnMaxHealthChanged;
 	
+	UPROPERTY(BlueprintAssignable)
+	FDeathStarted OnDeathStarted;
+	
 protected:
 	virtual void BeginPlay() override;
 	
@@ -61,9 +65,12 @@ protected:
 	UPROPERTY(ReplicatedUsing=OnRep_DeathState)
 	EDeathState DeathState = EDeathState::NotDead;
 	
-	UPROPERTY(ReplicatedUsing=OnRep_Heath)
-	float Health;
+	UPROPERTY(ReplicatedUsing=OnRep_Health, EditDefaultsOnly, Category="FPS|Health")
+	float Health = 100.0f;
 	
-	UPROPERTY(ReplicatedUsing=OnRep_MaxHealth)
-	float MaxHealth;
+	UPROPERTY(ReplicatedUsing=OnRep_MaxHealth, EditDefaultsOnly, Category="FPS|Health")
+	float MaxHealth = 100.0f;
+	
+private:
+	void StartDeath();
 };

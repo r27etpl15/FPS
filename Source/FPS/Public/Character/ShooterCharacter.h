@@ -64,6 +64,12 @@ protected:
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnAim(bool bIsAiming);
 	
+	UFUNCTION()
+	void OnDeathStarted();
+	
+	UFUNCTION(BlueprintImplementableEvent)
+	void DeathEffects();
+	
 private:
 	void Input_CycleWeapon();
 	void Input_ReloadWeapon();

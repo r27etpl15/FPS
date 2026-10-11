@@ -7,10 +7,13 @@
 #include "Attributes/HealthComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Combat/CombatComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "Data/WeaponData.h"
+#include "FPS/FPS.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "Player/ShooterPlayerController.h"
 #include "ShooterTypes/ShooterTypes.h"
 #include "Weapon/Weapon.h"
 
@@ -63,6 +66,13 @@ void AShooterCharacter::BeginPlay()
 	FirstPersonCamera->SetFieldOfView(DefaultFOV);
 	
 	StartingAimRotation = FRotator(0.0f, GetBaseAimRotation().Yaw, 0.0f);
+	
+	HealthComponent->OnDeathStarted.AddDynamic(this, &ThisClass::OnDeathStarted);
+	
+	if (AShooterPlayerController* PlayerController = Cast<AShooterPlayerController>(GetController()))
+	{
+		PlayerController->SetPawnAlive(true);
+	}
 }
 
 void AShooterCharacter::BeginDestroy()
@@ -230,6 +240,10 @@ void AShooterCharacter::AddAmmo_Implementation(const FGameplayTag& WeaponType, i
 
 bool AShooterCharacter::DoDamage_Implementation(float DamageAmount, AActor* DamageInstigator)
 {
+	if (!IsValid(HealthComponent)) { return false; }
+	
+	HealthComponent->ChangeHealthByAmount(-DamageAmount, DamageInstigator);
+	
 	const int32 MontageSelection = FMath::RandRange(0, HitReacts.Num() - 1);
 	
 	Multicast_HitReact(MontageSelection);
@@ -265,6 +279,26 @@ FRotator AShooterCharacter::GetFixedAimRotation() const
 bool AShooterCharacter::HasCurrentWeapon() const
 {
 	return IsValid(CombatComponent) && CombatComponent->GetCurrentWeapon() != nullptr;
+}
+
+void AShooterCharacter::OnDeathStarted()
+{
+	if (GetNetMode() != NM_DedicatedServer)
+	{
+		DeathEffects();
+		if (AShooterPlayerController* PlayerController = Cast<AShooterPlayerController>(GetController()); IsValid(PlayerController))
+		{
+			DisableInput(PlayerController);
+			if (PlayerController->IsLocalController())
+			{
+				PlayerController->SetPawnAlive(false);
+			}
+		}
+	}
+	
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
+	GetCapsuleComponent()->SetCollisionResponseToChannel(FPSTraceChannels::ECC_Weapon, ECR_Ignore);
+	GetMesh()->SetCollisionResponseToChannel(FPSTraceChannels::ECC_Weapon, ECR_Ignore);
 }
 
 void AShooterCharacter::Input_CycleWeapon()

@@ -21,6 +21,8 @@ class FPS_API AShooterPlayerController : public APlayerController
 public:
 	AShooterPlayerController();
 	
+	bool IsPawnAlive() const { return bPawnAlive; }
+	void SetPawnAlive(bool bInPawnAlive) { bPawnAlive = bInPawnAlive;}
 protected:
 	virtual void BeginPlay() override;
 	virtual void SetupInputComponent() override;
@@ -40,6 +42,8 @@ private:
 	
 	UPROPERTY(EditAnywhere, Category="FPS|Input")
 	TObjectPtr<UInputAction> JumpAction;
+	
+	bool bPawnAlive = true;
 	
 	void InputCrouch();
 	void InputJump();

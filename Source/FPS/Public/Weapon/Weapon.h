@@ -48,6 +48,7 @@ public:
 	int32 GetStartingCarriedAmmo() const { return StartingCarriedAmmo; }
 	UMaterialInterface* GetWeaponIcon() const { return WeaponIcon; }
 	EWeaponStatus GetWeaponStatus() const { return WeaponStatus; }
+	float GetDamage() const { return Damage; }
 	
 	void SetWeaponStatus(const EWeaponStatus InWeaponStatus) { WeaponStatus = InWeaponStatus; }
 	void SetAmmo(const int32 InAmmo) { Ammo = InAmmo; }
@@ -103,6 +104,9 @@ private:
 	
 	UPROPERTY(EditAnywhere, Category="FPS|Ammo")
 	int32 StartingCarriedAmmo = 10;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FPS|Damage", meta=(AllowPrivateAccess = "true"))
+	float Damage = 15.0f;
 	
 	UPROPERTY(EditDefaultsOnly, Category="FPS|Weapon")
 	TObjectPtr<UMaterialInterface> ReticleMaterialInterface;
