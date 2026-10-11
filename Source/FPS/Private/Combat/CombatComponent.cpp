@@ -259,6 +259,11 @@ void UCombatComponent::Server_FireWeapon_Implementation(const FHitResult& HitRes
 	if (!IsValid(CurrentWeapon)) { return; }
 	if (CurrentWeapon->GetAmmo() <= 0) { return; }
 	
+	if (IsValid(HitResult.GetActor()) && HitResult.GetActor()->Implements<UPlayerInterface>())
+	{
+		IPlayerInterface::Execute_DoDamage(HitResult.GetActor(), 0.0f, GetOwner());
+	}
+	
 	if (GetNetMode() != NM_ListenServer || !Cast<APawn>(GetOwner())->IsLocallyControlled())
 	{
 		CurrentWeapon->Auth_Fire();

@@ -38,6 +38,7 @@ public:
 	virtual void Notify_CycleWeapon_Implementation() override;
 	virtual void Notify_ReloadWeapon_Implementation() override;
 	virtual void AddAmmo_Implementation(const FGameplayTag& WeaponType, int32 AmmoAmount) override;
+	virtual bool DoDamage_Implementation(float DamageAmount, AActor* DamageInstigator) override;
 	//~ End UPlayerInterface Interface
 	
 	bool HasWeaponFirstReplicated() const { return bWeaponFirstReplicated; }
@@ -74,6 +75,9 @@ private:
 	// 原地转身
 	void CalculateTurnInPlaceParameters(float DeltaTime);
 	void TurnInPlace(float DeltaTime);
+	
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_HitReact(int32 MontageIndex);
 	
 	FRotator StartingAimRotation;
 	float InterpAO_Yaw;
@@ -116,4 +120,7 @@ private:
 	
 	UPROPERTY(EditAnywhere, Category="FPS|Input")
 	TObjectPtr<UInputAction> AimWeaponAction;
+	
+	UPROPERTY(EditAnywhere, Category="FPS|HitReact")
+	TArray<TObjectPtr<UAnimMontage>> HitReacts;
 };
