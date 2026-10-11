@@ -4,6 +4,7 @@
 #include "Character/ShooterCharacter.h"
 
 #include "EnhancedInputComponent.h"
+#include "Attributes/HealthComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Combat/CombatComponent.h"
 #include "Data/WeaponData.h"
@@ -49,6 +50,9 @@ AShooterCharacter::AShooterCharacter()
 	
 	CombatComponent = CreateDefaultSubobject<UCombatComponent>(TEXT("CombatComponent"));
 	CombatComponent->SetIsReplicated(true);
+	
+	HealthComponent = CreateDefaultSubobject<UHealthComponent>(TEXT("HealthComponent"));
+	HealthComponent->SetIsReplicated(true);
 	
 	DefaultFOV = 90.0f;
 	

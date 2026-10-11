@@ -7,11 +7,12 @@
 #include "Interfaces/PlayerInterface.h"
 #include "ShooterCharacter.generated.h"
 
-enum class ETurningInPlace : uint8;
+class UHealthComponent;
 class UInputAction;
 class UCombatComponent;
 class UCameraComponent;
 class USpringArmComponent;
+enum class ETurningInPlace : uint8;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FWeaponFirstReplicated, AWeapon*, Weapon, bool, bCurrentlyTargetingPlayer);
 
@@ -107,6 +108,9 @@ private:
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="FPS|Combat", meta=(AllowPrivateAccess = "true"))
 	TObjectPtr<UCombatComponent> CombatComponent;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="FPS|Health", meta=(AllowPrivateAccess = "true"))
+	TObjectPtr<UHealthComponent> HealthComponent;
 	
 	// 输入
 	UPROPERTY(EditAnywhere, Category="FPS|Input")
