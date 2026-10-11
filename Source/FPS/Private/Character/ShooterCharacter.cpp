@@ -49,10 +49,7 @@ AShooterCharacter::AShooterCharacter()
 	GetCharacterMovement()->MovementState.bCanCrouch = true;
 	
 	CombatComponent = CreateDefaultSubobject<UCombatComponent>(TEXT("CombatComponent"));
-	CombatComponent->SetIsReplicated(true);
-	
 	HealthComponent = CreateDefaultSubobject<UHealthComponent>(TEXT("HealthComponent"));
-	HealthComponent->SetIsReplicated(true);
 	
 	DefaultFOV = 90.0f;
 	

@@ -13,6 +13,8 @@
 UCombatComponent::UCombatComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
+	
+	SetIsReplicatedByDefault(true);
 }
 
 void UCombatComponent::InitializeWeaponWidgets() const
