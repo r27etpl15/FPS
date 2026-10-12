@@ -86,9 +86,12 @@ private:
 	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_HitReact(int32 MontageIndex);
 	
+	void DeathTimerFinished();
+	
 	FRotator StartingAimRotation;
 	float InterpAO_Yaw;
 	bool bWeaponFirstReplicated = false;
+	FTimerHandle DeathTimer;
 	
 	UPROPERTY(BlueprintReadOnly, Category="FPS|TurnInPlace", meta=(AllowPrivateAccess = "true"))
 	float AO_YAW;
@@ -99,8 +102,11 @@ private:
 	UPROPERTY(BlueprintReadOnly, Category="FPS|Strafing", meta=(AllowPrivateAccess = "true"))
 	float MovementOffsetYaw;
 	
+	UPROPERTY(EditDefaultsOnly, Category="FPS|Respawn", meta=(AllowPrivateAccess = "true"))
+	float RespawnTime = 5.0f;
+	
 	// 第一人称视角
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = "true"))
 	TObjectPtr<USkeletalMeshComponent> Mesh1P;
 	
 	UPROPERTY(VisibleAnywhere)

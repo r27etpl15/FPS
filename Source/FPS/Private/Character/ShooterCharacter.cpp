@@ -12,6 +12,8 @@
 #include "FPS/FPS.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "GameMode/ShooterGameModeBase.h"
+#include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Player/ShooterPlayerController.h"
 #include "ShooterTypes/ShooterTypes.h"
@@ -283,6 +285,12 @@ bool AShooterCharacter::HasCurrentWeapon() const
 
 void AShooterCharacter::OnDeathStarted()
 {
+	if (HasAuthority())
+	{
+		CombatComponent->DestroyInventory();
+		GetWorld()->GetTimerManager().SetTimer(DeathTimer, this, &ThisClass::DeathTimerFinished, RespawnTime);
+	}
+	
 	if (GetNetMode() != NM_DedicatedServer)
 	{
 		DeathEffects();
@@ -299,6 +307,15 @@ void AShooterCharacter::OnDeathStarted()
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
 	GetCapsuleComponent()->SetCollisionResponseToChannel(FPSTraceChannels::ECC_Weapon, ECR_Ignore);
 	GetMesh()->SetCollisionResponseToChannel(FPSTraceChannels::ECC_Weapon, ECR_Ignore);
+}
+
+void AShooterCharacter::DeathTimerFinished()
+{
+	AShooterGameModeBase* GameMode = Cast<AShooterGameModeBase>(UGameplayStatics::GetGameMode(this));
+	if (IsValid(GameMode))
+	{
+		GameMode->RequestRespawn(this, GetController());
+	}
 }
 
 void AShooterCharacter::Input_CycleWeapon()
