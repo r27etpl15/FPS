@@ -7,6 +7,7 @@
 #include "Interfaces/PlayerInterface.h"
 #include "ShooterCharacter.generated.h"
 
+class UEliminationComponent;
 class UHealthComponent;
 class UInputAction;
 class UCombatComponent;
@@ -123,6 +124,9 @@ private:
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="FPS|Health", meta=(AllowPrivateAccess = "true"))
 	TObjectPtr<UHealthComponent> HealthComponent;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="FPS|Elimination", meta=(AllowPrivateAccess = "true"))
+	TObjectPtr<UEliminationComponent> EliminationComponent;
 	
 	// 输入
 	UPROPERTY(EditAnywhere, Category="FPS|Input")

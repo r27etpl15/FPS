@@ -9,6 +9,7 @@
 #include "Combat/CombatComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Data/WeaponData.h"
+#include "Elimination/EliminationComponent.h"
 #include "FPS/FPS.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
@@ -55,6 +56,8 @@ AShooterCharacter::AShooterCharacter()
 	
 	CombatComponent = CreateDefaultSubobject<UCombatComponent>(TEXT("CombatComponent"));
 	HealthComponent = CreateDefaultSubobject<UHealthComponent>(TEXT("HealthComponent"));
+	EliminationComponent = CreateDefaultSubobject<UEliminationComponent>(TEXT("EliminationComponent"));
+	EliminationComponent->SetIsReplicated(false);
 	
 	DefaultFOV = 90.0f;
 	
@@ -74,6 +77,11 @@ void AShooterCharacter::BeginPlay()
 	if (AShooterPlayerController* PlayerController = Cast<AShooterPlayerController>(GetController()))
 	{
 		PlayerController->SetPawnAlive(true);
+	}
+	
+	if (HasAuthority())
+	{
+		CombatComponent->OnRoundReported.AddDynamic(EliminationComponent, &UEliminationComponent::OnRoundReported);
 	}
 }
 
