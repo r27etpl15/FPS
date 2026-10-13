@@ -63,8 +63,8 @@ enum class ESpecialElimType : uint16
 	Dethrone		= 1 << 4,	// 00000000 00010000 终结连杀
 	ShowStopper		= 1 << 5,	// 00000000 00100000
 	FirstBlood		= 1 << 6,	// 00000000 01000000
-	GainedTheLead	= 1 << 7,	// 00000000 10000000
-	TiedTheLeader	= 1 << 8,	// 00000001 00000000 追平领先者
+	GainedTheLead	= 1 << 7,	// 00000000 10000000 获得领先（优先级高于 TiedTheLeader）
+	TiedTheLeader	= 1 << 8,	// 00000001 00000000 追平领先者（可能和 GainedTheLead 同时置位，客户端优先显示 Gained）
 	LostTheLead		= 1 << 9	// 00000010 00000000
 };
 

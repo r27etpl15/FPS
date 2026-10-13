@@ -97,6 +97,15 @@ void AShooterPlayerState::SetLastAttacker(APlayerState* Attacker)
 	LastAttacker = Attacker;
 }
 
+void AShooterPlayerState::Client_ScoredElim_Implementation(int32 ElimScore)
+{
+}
+
+void AShooterPlayerState::Client_SpecialElim_Implementation(const ESpecialElimType& SpecialElim,
+	int32 SequentialElimCount, int32 StreakCount, int32 ElimScore)
+{
+}
+
 void AShooterPlayerState::Client_LostTheLead_Implementation()
 {
 	

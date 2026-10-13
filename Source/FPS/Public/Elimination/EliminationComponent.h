@@ -31,6 +31,8 @@ protected:
 	
 private:
 	AShooterPlayerState* GetShooterPlayerStateFromActor(AActor* Actor);
+	bool HasSpecialElimTypes(const ESpecialElimType& SpecialElimType);
+	
 	void ProcessHitOrMiss(bool bHit, AShooterPlayerState* AttackerPlayerState);
 	void ProcessElimination(bool bHeadShot, AShooterPlayerState* AttackerPlayerState, AShooterPlayerState* VictimPlayerState);
 	void ProcessHeadShot(bool bHeadShot, ESpecialElimType& OutSpecialElimType, AShooterPlayerState* AttackerPlayerState);

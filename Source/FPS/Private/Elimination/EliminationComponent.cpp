@@ -52,6 +52,11 @@ AShooterPlayerState* UEliminationComponent::GetShooterPlayerStateFromActor(AActo
 	return nullptr;
 }
 
+bool UEliminationComponent::HasSpecialElimTypes(const ESpecialElimType& SpecialElimType)
+{
+	return static_cast<uint16>(SpecialElimType) != 0;
+}
+
 void UEliminationComponent::ProcessHitOrMiss(bool bHit, AShooterPlayerState* AttackerPlayerState)
 {
 	if (bHit)
@@ -83,6 +88,15 @@ void UEliminationComponent::ProcessElimination(bool bHeadShot, AShooterPlayerSta
 		UpdateLeaderStatus(GameState, SpecialElimType, AttackerPlayerState, VictimPlayerState);
 	}
 	
+	// 只有特殊淘汰才会传 SpecialElimType，节省带宽
+	if (HasSpecialElimTypes(SpecialElimType))
+	{
+		AttackerPlayerState->Client_SpecialElim(SpecialElimType, SequentialElims, Streak, AttackerPlayerState->GetScoredElims());
+	}
+	else
+	{
+		AttackerPlayerState->Client_ScoredElim(AttackerPlayerState->GetScoredElims());
+	}
 }
 
 void UEliminationComponent::ProcessHeadShot(bool bHeadShot, ESpecialElimType& OutSpecialElimType,
@@ -183,6 +197,6 @@ void UEliminationComponent::UpdateLeaderStatus(AShooterGameStateBase* GameState,
 	
 	if (AttackerPlayerState != LastSoleLeader && AttackerPlayerState == GameState->GetSoleLeader())
 	{
-		OutSpecialElimType |= ESpecialElimType::TiedTheLeader;
+		OutSpecialElimType |= ESpecialElimType::GainedTheLead;
 	}
 }
