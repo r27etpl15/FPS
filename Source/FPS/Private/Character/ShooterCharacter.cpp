@@ -252,7 +252,11 @@ bool AShooterCharacter::DoDamage_Implementation(float DamageAmount, AActor* Dama
 {
 	if (!IsValid(HealthComponent)) { return false; }
 	
-	HealthComponent->ChangeHealthByAmount(-DamageAmount, DamageInstigator);
+	// 致命攻击则不播放受击动画
+	if (HealthComponent->ChangeHealthByAmount(-DamageAmount, DamageInstigator))
+	{
+		return true;
+	}
 	
 	const int32 MontageSelection = FMath::RandRange(0, HitReacts.Num() - 1);
 	

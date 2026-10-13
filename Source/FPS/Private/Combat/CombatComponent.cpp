@@ -261,10 +261,16 @@ void UCombatComponent::Server_FireWeapon_Implementation(const FHitResult& HitRes
 	if (!IsValid(CurrentWeapon)) { return; }
 	if (CurrentWeapon->GetAmmo() <= 0) { return; }
 	
-	if (IsValid(HitResult.GetActor()) && HitResult.GetActor()->Implements<UPlayerInterface>())
+	const bool bHit = IsValid(HitResult.GetActor()) && HitResult.GetActor()->Implements<UPlayerInterface>();
+	const bool bHeadShot = HitResult.BoneName == "head";
+	bool bLethal = false;
+	
+	if (bHit)
 	{
-		IPlayerInterface::Execute_DoDamage(HitResult.GetActor(), CurrentWeapon->GetDamage(), GetOwner());
+		bLethal = IPlayerInterface::Execute_DoDamage(HitResult.GetActor(), CurrentWeapon->GetDamage(), GetOwner());
 	}
+	
+	OnRoundReported.Broadcast(GetOwner(), HitResult.GetActor(), bHit, bHeadShot, bLethal);
 	
 	if (GetNetMode() != NM_ListenServer || !Cast<APawn>(GetOwner())->IsLocallyControlled())
 	{

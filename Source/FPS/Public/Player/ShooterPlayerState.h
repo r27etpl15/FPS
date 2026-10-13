@@ -19,17 +19,21 @@ public:
 	
 	void GotFirstBlood();
 	void IsNowWinner();
+	void SetOnStreak(bool bIsOnStreak);
+	bool IsOnStreak() const { return bOnStreak; }
 	
-	void AddScoredElims();
-	void AddHeadShotElims();
-	void AddDefeats();
-	void AddHits();
-	void AddMisses();
+	void AddScoredElim();
+	void AddHeadShotElim();
+	void AddDefeat();
+	void AddHit();
+	void AddMiss();
 	void UpdateHighestStreak(int32 StreakCount);
-	void AddRevengeElims();
-	void AddDethroneElims();
-	void AddShowStopperElims();
-	void AddSequentialElims(int32 SequenceCount);
+	void AddRevengeElim();
+	void AddDethroneElim();
+	void AddShowStopperElim();
+	void AddSequentialElim(int32 SequenceCount);
+	void SetLastAttacker(APlayerState* Attacker);
+	APlayerState* GetLastAttacker() const { return LastAttacker.IsValid() ? LastAttacker.Get() : nullptr; }
 	
 private:
 	bool bWinner = false;
@@ -47,4 +51,6 @@ private:
 	int32 ShowStopperElims = 0;				// 终结正在连杀的玩家
 	
 	TMap<int32, int32> SequentialElims;		// 连杀数 / 次数， 例如 2 / 4，一局中两连杀有过 4 次
+	
+	TWeakObjectPtr<APlayerState> LastAttacker;
 };

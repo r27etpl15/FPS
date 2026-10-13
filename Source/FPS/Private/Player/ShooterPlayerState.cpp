@@ -5,7 +5,7 @@
 
 AShooterPlayerState::AShooterPlayerState()
 {
-	NetUpdateFrequency = 100.0f;
+	SetNetUpdateFrequency(100.0f);
 }
 
 void AShooterPlayerState::GotFirstBlood()
@@ -18,27 +18,32 @@ void AShooterPlayerState::IsNowWinner()
 	bWinner = true;
 }
 
-void AShooterPlayerState::AddScoredElims()
+void AShooterPlayerState::SetOnStreak(bool bIsOnStreak)
+{
+	bOnStreak = bIsOnStreak;
+}
+
+void AShooterPlayerState::AddScoredElim()
 {
 	ScoredElims++;
 }
 
-void AShooterPlayerState::AddHeadShotElims()
+void AShooterPlayerState::AddHeadShotElim()
 {
 	HeadShotElims++;
 }
 
-void AShooterPlayerState::AddDefeats()
+void AShooterPlayerState::AddDefeat()
 {
 	Defeats++;
 }
 
-void AShooterPlayerState::AddHits()
+void AShooterPlayerState::AddHit()
 {
 	Hits++;
 }
 
-void AShooterPlayerState::AddMisses()
+void AShooterPlayerState::AddMiss()
 {
 	Misses++;
 }
@@ -51,22 +56,22 @@ void AShooterPlayerState::UpdateHighestStreak(int32 StreakCount)
 	}
 }
 
-void AShooterPlayerState::AddRevengeElims()
+void AShooterPlayerState::AddRevengeElim()
 {
 	RevengeElims++;
 }
 
-void AShooterPlayerState::AddDethroneElims()
+void AShooterPlayerState::AddDethroneElim()
 {
 	DethroneElims++;
 }
 
-void AShooterPlayerState::AddShowStopperElims()
+void AShooterPlayerState::AddShowStopperElim()
 {
 	ShowStopperElims++;
 }
 
-void AShooterPlayerState::AddSequentialElims(int32 SequenceCount)
+void AShooterPlayerState::AddSequentialElim(int32 SequenceCount)
 {
 	if (SequentialElims.Contains(SequenceCount))
 	{
@@ -85,4 +90,9 @@ void AShooterPlayerState::AddSequentialElims(int32 SequenceCount)
 			Elem.Value--;
 		}
 	}
+}
+
+void AShooterPlayerState::SetLastAttacker(APlayerState* Attacker)
+{
+	LastAttacker = Attacker;
 }
