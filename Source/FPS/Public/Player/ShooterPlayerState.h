@@ -34,6 +34,10 @@ public:
 	void AddSequentialElim(int32 SequenceCount);
 	void SetLastAttacker(APlayerState* Attacker);
 	APlayerState* GetLastAttacker() const { return LastAttacker.IsValid() ? LastAttacker.Get() : nullptr; }
+	int32 GetScoredElims() const { return ScoredElims; }
+	
+	UFUNCTION(Client, Reliable)
+	void Client_LostTheLead();
 	
 private:
 	bool bWinner = false;

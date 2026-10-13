@@ -80,6 +80,7 @@ void UEliminationComponent::ProcessElimination(bool bHeadShot, AShooterPlayerSta
 	if (IsValid(GameState))
 	{
 		HandleFirstBlood(GameState, SpecialElimType, AttackerPlayerState);
+		UpdateLeaderStatus(GameState, SpecialElimType, AttackerPlayerState, VictimPlayerState);
 	}
 	
 }
@@ -151,5 +152,37 @@ void UEliminationComponent::HandleFirstBlood(AShooterGameStateBase* GameState, E
 	{
 		OutSpecialElimType |= ESpecialElimType::FirstBlood;
 		AttackerPlayerState->GotFirstBlood();
+	}
+}
+
+void UEliminationComponent::UpdateLeaderStatus(AShooterGameStateBase* GameState, ESpecialElimType& OutSpecialElimType,
+	AShooterPlayerState* AttackerPlayerState, AShooterPlayerState* VictimPlayerState)
+{
+	AShooterPlayerState* LastSoleLeader = GameState->GetSoleLeader();
+	const bool bAttackerWasTiedForTheLead = GameState->IsTiedForTheLead(AttackerPlayerState);
+	
+	GameState->UpdateLeader();
+	if (!bAttackerWasTiedForTheLead && GameState->IsTiedForTheLead(AttackerPlayerState))
+	{
+		// 之前没有领先，现在领先了
+		OutSpecialElimType |= ESpecialElimType::TiedTheLeader;
+	}
+	
+	if (IsValid(LastSoleLeader) && LastSoleLeader != GameState->GetSoleLeader())
+	{
+		// 上一个领先的玩家失去了领先的地位，通知客户端显示失去领先
+		// ESpecialElimType 是传给 AttackerPlayerState 客户端的，所以对于失去领先的玩家要发送 RPC
+		LastSoleLeader->Client_LostTheLead();
+		
+		if (VictimPlayerState == LastSoleLeader)
+		{
+			OutSpecialElimType |= ESpecialElimType::Dethrone;
+			AttackerPlayerState->AddDethroneElim();
+		}
+	}
+	
+	if (AttackerPlayerState != LastSoleLeader && AttackerPlayerState == GameState->GetSoleLeader())
+	{
+		OutSpecialElimType |= ESpecialElimType::TiedTheLeader;
 	}
 }

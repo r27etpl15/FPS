@@ -96,3 +96,8 @@ void AShooterPlayerState::SetLastAttacker(APlayerState* Attacker)
 {
 	LastAttacker = Attacker;
 }
+
+void AShooterPlayerState::Client_LostTheLead_Implementation()
+{
+	
+}

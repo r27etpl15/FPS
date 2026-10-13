@@ -37,6 +37,7 @@ private:
 	void ProcessSequentialEliminations(ESpecialElimType& OutSpecialElimType, AShooterPlayerState* AttackerPlayerState);
 	void ProcessStreaks(ESpecialElimType& OutSpecialElimType, AShooterPlayerState* AttackerPlayerState, AShooterPlayerState* VictimPlayerState);
 	void HandleFirstBlood(AShooterGameStateBase* GameState, ESpecialElimType& OutSpecialElimType, AShooterPlayerState* AttackerPlayerState);
+	void UpdateLeaderStatus(AShooterGameStateBase* GameState, ESpecialElimType& OutSpecialElimType, AShooterPlayerState* AttackerPlayerState, AShooterPlayerState* VictimPlayerState);
 	
 	UPROPERTY(EditDefaultsOnly, Category="FPS|Elimination", meta=(AllowPrivateAccess = "true"))
 	int32 ElimsNeededForStreak = 2;

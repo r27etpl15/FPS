@@ -6,6 +6,7 @@
 #include "GameFramework/GameStateBase.h"
 #include "ShooterGameStateBase.generated.h"
 
+class AShooterPlayerState;
 /**
  * 
  */
@@ -19,7 +20,12 @@ public:
 	
 	bool HasFirstBloodBeenHad() const { return bHasFirstBloodBeenHad; }
 	void UpdateLeader();
+	AShooterPlayerState* GetSoleLeader() const;
+	bool IsTiedForTheLead(AShooterPlayerState* PlayerState);
 	
 private:
 	bool bHasFirstBloodBeenHad = false;
+	
+	UPROPERTY()
+	TArray<TObjectPtr<AShooterPlayerState>> Leaders;
 };
