@@ -7,6 +7,7 @@
 #include "EliminationComponent.generated.h"
 
 
+class AShooterGameStateBase;
 enum class ESpecialElimType : uint16;
 class AShooterPlayerState;
 
@@ -35,6 +36,7 @@ private:
 	void ProcessHeadShot(bool bHeadShot, ESpecialElimType& OutSpecialElimType, AShooterPlayerState* AttackerPlayerState);
 	void ProcessSequentialEliminations(ESpecialElimType& OutSpecialElimType, AShooterPlayerState* AttackerPlayerState);
 	void ProcessStreaks(ESpecialElimType& OutSpecialElimType, AShooterPlayerState* AttackerPlayerState, AShooterPlayerState* VictimPlayerState);
+	void HandleFirstBlood(AShooterGameStateBase* GameState, ESpecialElimType& OutSpecialElimType, AShooterPlayerState* AttackerPlayerState);
 	
 	UPROPERTY(EditDefaultsOnly, Category="FPS|Elimination", meta=(AllowPrivateAccess = "true"))
 	int32 ElimsNeededForStreak = 2;

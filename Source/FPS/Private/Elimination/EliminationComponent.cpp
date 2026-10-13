@@ -3,6 +3,8 @@
 
 #include "Elimination/EliminationComponent.h"
 
+#include "Game/ShooterGameStateBase.h"
+#include "Kismet/GameplayStatics.h"
 #include "Player/ShooterPlayerState.h"
 #include "ShooterTypes/ShooterTypes.h"
 
@@ -74,6 +76,12 @@ void UEliminationComponent::ProcessElimination(bool bHeadShot, AShooterPlayerSta
 	ProcessSequentialEliminations(SpecialElimType, AttackerPlayerState);
 	ProcessStreaks(SpecialElimType, AttackerPlayerState, VictimPlayerState);
 	
+	AShooterGameStateBase* GameState = Cast<AShooterGameStateBase>(UGameplayStatics::GetGameState(AttackerPlayerState));
+	if (IsValid(GameState))
+	{
+		HandleFirstBlood(GameState, SpecialElimType, AttackerPlayerState);
+	}
+	
 }
 
 void UEliminationComponent::ProcessHeadShot(bool bHeadShot, ESpecialElimType& OutSpecialElimType,
@@ -134,4 +142,14 @@ void UEliminationComponent::ProcessStreaks(ESpecialElimType& OutSpecialElimType,
 		AttackerPlayerState->SetLastAttacker(nullptr);
 	}
 	VictimPlayerState->SetLastAttacker(AttackerPlayerState);
+}
+
+void UEliminationComponent::HandleFirstBlood(AShooterGameStateBase* GameState, ESpecialElimType& OutSpecialElimType,
+	AShooterPlayerState* AttackerPlayerState)
+{
+	if (!GameState->HasFirstBloodBeenHad())
+	{
+		OutSpecialElimType |= ESpecialElimType::FirstBlood;
+		AttackerPlayerState->GotFirstBlood();
+	}
 }

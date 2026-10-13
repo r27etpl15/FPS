@@ -13,7 +13,7 @@
 #include "FPS/FPS.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
-#include "GameMode/ShooterGameModeBase.h"
+#include "Game/ShooterGameModeBase.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Player/ShooterPlayerController.h"

@@ -1,7 +1,7 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "GameMode/ShooterGameModeBase.h"
+#include "Game/ShooterGameModeBase.h"
 
 #include "GameFramework/Character.h"
 #include "GameFramework/PlayerStart.h"
