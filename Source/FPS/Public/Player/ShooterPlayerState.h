@@ -6,6 +6,7 @@
 #include "GameFramework/PlayerState.h"
 #include "ShooterPlayerState.generated.h"
 
+class USpecialElimData;
 enum class ESpecialElimType : uint16;
 /**
  * 
@@ -64,4 +65,7 @@ private:
 	TMap<int32, int32> SequentialElims;		// 连杀数 / 次数， 例如 2 / 4，一局中两连杀有过 4 次
 	
 	TWeakObjectPtr<APlayerState> LastAttacker;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="FPS|SpecialElims", meta=(AllowPrivateAccess = "true"))
+	TObjectPtr<USpecialElimData> SpecialElimData;
 };
