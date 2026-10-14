@@ -72,4 +72,7 @@ private:
 	
 	UPROPERTY(EditDefaultsOnly, Category="FPS|SpecialElims", meta=(AllowPrivateAccess = "true"))
 	TSubclassOf<USpecialElimWidget> SpecialElimWidgetClass;
+	
+	// 解码特殊淘汰位掩码
+	TArray<ESpecialElimType> DecodeSpecialElimBitmask(ESpecialElimType SpecialElimTypeBitmask);
 };

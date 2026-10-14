@@ -100,6 +100,23 @@ void AShooterPlayerState::SetLastAttacker(APlayerState* Attacker)
 	LastAttacker = Attacker;
 }
 
+TArray<ESpecialElimType> AShooterPlayerState::DecodeSpecialElimBitmask(ESpecialElimType SpecialElimTypeBitmask)
+{
+	TArray<ESpecialElimType> ValidElims;
+	
+	uint16 BitmaskValue = static_cast<uint16>(SpecialElimTypeBitmask);
+	
+	for (uint16 i = 0; i < 16; i++)
+	{
+		if (BitmaskValue & (1 << i))
+		{
+			ValidElims.Add(static_cast<ESpecialElimType>(1 << i));
+		}
+	}
+	
+	return ValidElims;
+}
+
 void AShooterPlayerState::Client_ScoredElim_Implementation(int32 ElimScore)
 {
 }
