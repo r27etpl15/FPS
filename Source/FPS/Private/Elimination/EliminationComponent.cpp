@@ -176,9 +176,10 @@ void UEliminationComponent::UpdateLeaderStatus(AShooterGameStateBase* GameState,
 	const bool bAttackerWasTiedForTheLead = GameState->IsTiedForTheLead(AttackerPlayerState);
 	
 	GameState->UpdateLeader();
+	
+	// 之前没有领先，现在并列领先了
 	if (!bAttackerWasTiedForTheLead && GameState->IsTiedForTheLead(AttackerPlayerState))
 	{
-		// 之前没有领先，现在领先了
 		OutSpecialElimType |= ESpecialElimType::TiedTheLeader;
 	}
 	
@@ -195,6 +196,7 @@ void UEliminationComponent::UpdateLeaderStatus(AShooterGameStateBase* GameState,
 		}
 	}
 	
+	// 之前没有独自领先，现在独自领先了
 	if (AttackerPlayerState != LastSoleLeader && AttackerPlayerState == GameState->GetSoleLeader())
 	{
 		OutSpecialElimType |= ESpecialElimType::GainedTheLead;
