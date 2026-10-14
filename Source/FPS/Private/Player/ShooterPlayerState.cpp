@@ -3,6 +3,9 @@
 
 #include "Player/ShooterPlayerState.h"
 
+#include "Data/SpecialElimData.h"
+#include "UI/Elims/SpecialElimWidget.h"
+
 AShooterPlayerState::AShooterPlayerState()
 {
 	SetNetUpdateFrequency(100.0f);
@@ -108,5 +111,16 @@ void AShooterPlayerState::Client_SpecialElim_Implementation(const ESpecialElimTy
 
 void AShooterPlayerState::Client_LostTheLead_Implementation()
 {
+	ensure(IsValid(SpecialElimData));
 	
+	FSpecialElimInfo& SpecialElimInfo = SpecialElimData->SpecialElimInfo.FindChecked(ESpecialElimType::LostTheLead);
+	if (IsValid(SpecialElimWidgetClass))
+	{
+		USpecialElimWidget* SpecialElimWidget = CreateWidget<USpecialElimWidget>(GetPlayerController(), SpecialElimWidgetClass);
+		if (IsValid(SpecialElimWidget))
+		{
+			SpecialElimWidget->InitializeWidget(SpecialElimInfo.ElimMessage, SpecialElimInfo.ElimIcon);
+			SpecialElimWidget->AddToViewport();
+		}
+	}
 }

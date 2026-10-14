@@ -6,6 +6,7 @@
 #include "GameFramework/PlayerState.h"
 #include "ShooterPlayerState.generated.h"
 
+class USpecialElimWidget;
 class USpecialElimData;
 enum class ESpecialElimType : uint16;
 /**
@@ -68,4 +69,7 @@ private:
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="FPS|SpecialElims", meta=(AllowPrivateAccess = "true"))
 	TObjectPtr<USpecialElimData> SpecialElimData;
+	
+	UPROPERTY(EditDefaultsOnly, Category="FPS|SpecialElims", meta=(AllowPrivateAccess = "true"))
+	TSubclassOf<USpecialElimWidget> SpecialElimWidgetClass;
 };
