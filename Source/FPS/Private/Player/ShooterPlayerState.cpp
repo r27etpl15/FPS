@@ -124,6 +124,87 @@ void AShooterPlayerState::Client_ScoredElim_Implementation(int32 ElimScore)
 void AShooterPlayerState::Client_SpecialElim_Implementation(const ESpecialElimType& SpecialElim,
 	int32 SequentialElimCount, int32 StreakCount, int32 ElimScore)
 {
+	ensure(IsValid(SpecialElimData));
+	
+	TArray<ESpecialElimType> SpecialElimTypes = DecodeSpecialElimBitmask(SpecialElim);
+	for (ESpecialElimType ElimType : SpecialElimTypes)
+	{
+		FSpecialElimInfo& SpecialElimInfo = SpecialElimData->SpecialElimInfo.FindChecked(ElimType);
+		if (ElimType == ESpecialElimType::Sequential)
+		{
+			SpecialElimInfo.SequentialElimCount = SequentialElimCount;
+		}
+		if (ElimType == ESpecialElimType::Streak)
+		{
+			SpecialElimInfo.StreakCount = StreakCount;
+		}
+		SpecialElimInfo.ElimType = ElimType;
+		
+		SpecialElimQueue.Enqueue(SpecialElimInfo);
+	}
+	
+	if (!bIsProcessingQueue)
+	{
+		ProcessNextSpecialElim();
+	}
+}
+
+void AShooterPlayerState::ProcessNextSpecialElim()
+{
+	FSpecialElimInfo SpecialElimInfo;
+	if (SpecialElimQueue.Dequeue(SpecialElimInfo))
+	{
+		bIsProcessingQueue = true;
+		ShowSpecialElim(SpecialElimInfo);
+		
+		GetWorldTimerManager().SetTimerForNextTick([this]()
+		{
+			FTimerHandle TimerHandle;
+			GetWorldTimerManager().SetTimer(TimerHandle, this, &ThisClass::ProcessNextSpecialElim, ElimDisplayTime);
+		});
+	}
+	else
+	{
+		bIsProcessingQueue = false;
+	}
+}
+
+void AShooterPlayerState::ShowSpecialElim(const FSpecialElimInfo& SpecialElimInfo)
+{
+	FString ElimMessageString = SpecialElimInfo.ElimMessage;
+	if (SpecialElimInfo.ElimType == ESpecialElimType::Sequential)
+	{
+		if (SpecialElimInfo.SequentialElimCount == 2)
+		{
+			ElimMessageString = FString(TEXT("双杀！"));
+		}
+		else if (SpecialElimInfo.SequentialElimCount == 3)
+		{
+			ElimMessageString = FString(TEXT("三杀!"));
+		}
+		else if (SpecialElimInfo.SequentialElimCount == 4)
+		{
+			ElimMessageString = FString(TEXT("四杀!"));
+		}
+		else if (SpecialElimInfo.SequentialElimCount > 4)
+		{
+			ElimMessageString = FString::Printf(TEXT("连杀 x %d！"), SpecialElimInfo.SequentialElimCount);
+		}
+	}
+	if (SpecialElimInfo.ElimType == ESpecialElimType::Streak)
+	{
+		ElimMessageString = FString::Printf(TEXT("天神下凡 x %d！"), SpecialElimInfo.StreakCount);
+	}
+	
+	if (IsValid(SpecialElimWidgetClass))
+	{
+		USpecialElimWidget* SpecialElimWidget = CreateWidget<USpecialElimWidget>(GetPlayerController(), SpecialElimWidgetClass);
+		if (IsValid(SpecialElimWidget))
+		{
+			SpecialElimWidget->InitializeWidget(ElimMessageString, SpecialElimInfo.ElimIcon);
+			SpecialElimWidget->AddToViewport();
+		}
+	}
 }
 
 void AShooterPlayerState::Client_LostTheLead_Implementation()

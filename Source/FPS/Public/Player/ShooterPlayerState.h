@@ -6,6 +6,7 @@
 #include "GameFramework/PlayerState.h"
 #include "ShooterPlayerState.generated.h"
 
+struct FSpecialElimInfo;
 class USpecialElimWidget;
 class USpecialElimData;
 enum class ESpecialElimType : uint16;
@@ -73,6 +74,15 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category="FPS|SpecialElims", meta=(AllowPrivateAccess = "true"))
 	TSubclassOf<USpecialElimWidget> SpecialElimWidgetClass;
 	
+	UPROPERTY(EditDefaultsOnly, Category="FPS|SpecialElims", meta=(AllowPrivateAccess = "true"))
+	float ElimDisplayTime = 0.5f;
+	
+	TQueue<FSpecialElimInfo> SpecialElimQueue;
+	bool bIsProcessingQueue = false;
+	
 	// 解码特殊淘汰位掩码
 	TArray<ESpecialElimType> DecodeSpecialElimBitmask(ESpecialElimType SpecialElimTypeBitmask);
+	
+	void ProcessNextSpecialElim();
+	void ShowSpecialElim(const FSpecialElimInfo& SpecialElimInfo);
 };
