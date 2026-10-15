@@ -267,7 +267,9 @@ void UCombatComponent::Server_FireWeapon_Implementation(const FHitResult& HitRes
 	
 	if (bHit)
 	{
-		bLethal = IPlayerInterface::Execute_DoDamage(HitResult.GetActor(), CurrentWeapon->GetDamage(), GetOwner());
+		const float DamageAmount = CurrentWeapon->GetDamage()
+			* (bHeadShot ? CurrentWeapon->GetHeadShotDamageMultiplier() : 1.0f);
+		bLethal = IPlayerInterface::Execute_DoDamage(HitResult.GetActor(), DamageAmount, GetOwner());
 	}
 	
 	OnRoundReported.Broadcast(GetOwner(), HitResult.GetActor(), bHit, bHeadShot, bLethal);
