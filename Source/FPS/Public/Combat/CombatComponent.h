@@ -98,6 +98,9 @@ private:
 	bool bHitPlayerLastFrame = false;
 	FTimerHandle FireTimer;
 	
+	float AccumulatedRecoilPitch = 0.0f;
+	float AccumulatedRecoilYaw = 0.0f;
+	
 	UPROPERTY(Transient, Replicated)
 	TArray<TObjectPtr<AWeapon>> Inventory;
 	
@@ -118,6 +121,9 @@ private:
 	int32 Local_WeaponIndex = 0;
 	
 	void FireTimerFinished();
+	
+	void ApplyRecoil();
+	void RecoverRecoil(float DeltaTime);
 	
 	void SetCurrentWeapon(AWeapon* NewWeapon, AWeapon* LastWeapon);
 	

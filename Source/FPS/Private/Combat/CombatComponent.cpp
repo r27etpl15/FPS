@@ -5,6 +5,7 @@
 
 #include "Data/WeaponData.h"
 #include "FPS/FPS.h"
+#include "GameFramework/PlayerController.h"
 #include "Interfaces/PlayerInterface.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Net/UnrealNetwork.h"
@@ -41,6 +42,8 @@ void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 	
 	APlayerController* PlayerController = Cast<APlayerController>(OwningPawn->GetController());
 	if (!IsValid(PlayerController)) { return; }
+	
+	RecoverRecoil(DeltaTime);
 	
 	FVector EyesWorldLocation;
 	FRotator EyesWorldRotation;
@@ -344,9 +347,49 @@ void UCombatComponent::Local_FireWeapon()
 	
 	OnRoundFired.Broadcast(CurrentWeapon->GetAmmo(), CurrentWeapon->GetMagCapacity(), CurrentReserveAmmo);
 	
+	ApplyRecoil();
+	
 	GetWorld()->GetTimerManager().SetTimer(FireTimer, this, &ThisClass::FireTimerFinished, CurrentWeapon->GetFireTime());
 	
 	Server_FireWeapon(HitResult);
+}
+
+void UCombatComponent::ApplyRecoil()
+{
+	if (!IsValid(CurrentWeapon)) { return; }
+	
+	APawn* OwningPawn = Cast<APawn>(GetOwner());
+	APlayerController* PlayerController = IsValid(OwningPawn) ? Cast<APlayerController>(OwningPawn->GetController()) : nullptr;
+	if (!IsValid(PlayerController)) { return; }
+	
+	const float PitchKick = -CurrentWeapon->GetRecoilPitch();
+	const float YawKick = FMath::RandRange(-CurrentWeapon->GetRecoilYaw(), CurrentWeapon->GetRecoilYaw());
+	
+	AccumulatedRecoilPitch += PitchKick;
+	AccumulatedRecoilYaw += YawKick;
+	
+	PlayerController->AddPitchInput(PitchKick);
+	PlayerController->AddYawInput(YawKick);
+}
+
+void UCombatComponent::RecoverRecoil(float DeltaTime)
+{
+	if (FMath::IsNearlyZero(AccumulatedRecoilPitch) && FMath::IsNearlyZero(AccumulatedRecoilYaw)) { return; }
+	if (!IsValid(CurrentWeapon)) { return; }
+	
+	APawn* OwningPawn = Cast<APawn>(GetOwner());
+	APlayerController* PlayerController = IsValid(OwningPawn) ? Cast<APlayerController>(OwningPawn->GetController()) : nullptr;
+	if (!IsValid(PlayerController)) { return; }
+	
+	const float MaxStep = CurrentWeapon->GetRecoilRecoverySpeed() * DeltaTime;
+	const float PitchStep = FMath::Clamp(-AccumulatedRecoilPitch, -MaxStep, MaxStep);
+	const float YawStep = FMath::Clamp(-AccumulatedRecoilYaw, -MaxStep, MaxStep);
+	
+	AccumulatedRecoilPitch += PitchStep;
+	AccumulatedRecoilYaw += YawStep;
+	
+	PlayerController->AddPitchInput(PitchStep);
+	PlayerController->AddYawInput(YawStep);
 }
 
 int32 UCombatComponent::AdvanceWeaponIndex()

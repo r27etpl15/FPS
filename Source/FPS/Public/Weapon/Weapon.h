@@ -50,6 +50,9 @@ public:
 	EWeaponStatus GetWeaponStatus() const { return WeaponStatus; }
 	float GetDamage() const { return Damage; }
 	float GetHeadShotDamageMultiplier() const { return HeadShotDamageMultiplier; }
+	float GetRecoilPitch() const { return RecoilPitch; }
+	float GetRecoilYaw() const { return RecoilYaw; }
+	float GetRecoilRecoverySpeed() const { return RecoilRecoverySpeed; }
 	
 	void SetWeaponStatus(const EWeaponStatus InWeaponStatus) { WeaponStatus = InWeaponStatus; }
 	void SetAmmo(const int32 InAmmo) { Ammo = InAmmo; }
@@ -111,6 +114,15 @@ private:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FPS|Damage", meta=(AllowPrivateAccess = "true"))
 	float HeadShotDamageMultiplier = 3.0f;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FPS|Recoil", meta=(AllowPrivateAccess = "true"))
+	float RecoilPitch = 0.8f;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FPS|Recoil", meta=(AllowPrivateAccess = "true"))
+	float RecoilYaw = 0.3f;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FPS|Recoil", meta=(AllowPrivateAccess = "true"))
+	float RecoilRecoverySpeed = 6.0f;
 	
 	UPROPERTY(EditDefaultsOnly, Category="FPS|Weapon")
 	TObjectPtr<UMaterialInterface> ReticleMaterialInterface;
