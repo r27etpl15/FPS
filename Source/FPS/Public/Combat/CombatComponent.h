@@ -92,6 +92,16 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category="FPS|Weapon")
 	float TraceLength = 20000;
 	
+	// 反作弊（服务器专用）
+	UPROPERTY(EditDefaultsOnly, Category="FPS|AntiCheat")
+	float FireRateTolerance = 0.8f;
+	
+	UPROPERTY(EditDefaultsOnly, Category="FPS|AntiCheat")
+	float ShotDistanceTolerance = 1.1f;
+	
+	UPROPERTY(EditDefaultsOnly, Category="FPS|AntiCheat")
+	FName HeadBoneName = FName("head");
+	
 private:
 	bool bTriggerPressed = false;
 	bool bHitPlayer = false;
@@ -100,6 +110,11 @@ private:
 	
 	float AccumulatedRecoilPitch = 0.0f;
 	float AccumulatedRecoilYaw = 0.0f;
+	
+	float LastFireTime = -1000.0f;
+	
+	bool IsShotDistanceValid(const FHitResult& HitResult) const;
+	bool IsHeadShot(const FHitResult& HitResult) const;
 	
 	UPROPERTY(Transient, Replicated)
 	TArray<TObjectPtr<AWeapon>> Inventory;

@@ -9,6 +9,7 @@
 #include "Interfaces/PlayerInterface.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Net/UnrealNetwork.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "Weapon/Weapon.h"
 
 UCombatComponent::UCombatComponent()
@@ -161,6 +162,13 @@ void UCombatComponent::Notify_ReloadWeapon()
 	
 	if (GetNetMode() == NM_ListenServer || GetNetMode() == NM_DedicatedServer || GetNetMode() == NM_Standalone)
 	{
+		// 反作弊：仅在一次合法的装填过程中执行一次实际装填，防止重复触发刷弹
+		if (CurrentWeapon->GetWeaponStatus() != EWeaponStatus::Reloading)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("[AntiCheat] %s 非法换弹通知，已忽略"), *GetNameSafe(GetOwner()));
+			return;
+		}
+		
 		// 实际装填
 		const int32 EmptySpace = CurrentWeapon->GetMagCapacity() - CurrentWeapon->GetAmmo();
 		const int32 AmountToReFill = FMath::Min(EmptySpace, CurrentReserveAmmo);
@@ -264,18 +272,28 @@ void UCombatComponent::Server_FireWeapon_Implementation(const FHitResult& HitRes
 	if (!IsValid(CurrentWeapon)) { return; }
 	if (CurrentWeapon->GetAmmo() <= 0) { return; }
 	
-	const bool bHit = IsValid(HitResult.GetActor()) && HitResult.GetActor()->Implements<UPlayerInterface>();
-	const bool bHeadShot = HitResult.BoneName == "head";
+	// 反作弊：服务器射速校验，拒绝高于武器射速的请求
+	const float CurrentTime = GetWorld()->GetTimeSeconds();
+	if (CurrentTime - LastFireTime < CurrentWeapon->GetFireTime() * FireRateTolerance)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[AntiCheat] %s 射速异常，已拒绝"), *GetNameSafe(GetOwner()));
+		return;
+	}
+	LastFireTime = CurrentTime;
+	
+	const bool bReportedHit = IsValid(HitResult.GetActor()) && HitResult.GetActor()->Implements<UPlayerInterface>();
+	const bool bValidHit = bReportedHit && IsShotDistanceValid(HitResult);
+	const bool bHeadShot = bValidHit && IsHeadShot(HitResult);
 	bool bLethal = false;
 	
-	if (bHit)
+	if (bValidHit)
 	{
 		const float DamageAmount = CurrentWeapon->GetDamage()
 			* (bHeadShot ? CurrentWeapon->GetHeadShotDamageMultiplier() : 1.0f);
 		bLethal = IPlayerInterface::Execute_DoDamage(HitResult.GetActor(), DamageAmount, GetOwner());
 	}
 	
-	OnRoundReported.Broadcast(GetOwner(), HitResult.GetActor(), bHit, bHeadShot, bLethal);
+	OnRoundReported.Broadcast(GetOwner(), bValidHit ? HitResult.GetActor() : nullptr, bValidHit, bHeadShot, bLethal);
 	
 	if (GetNetMode() != NM_ListenServer || !Cast<APawn>(GetOwner())->IsLocallyControlled())
 	{
@@ -283,6 +301,32 @@ void UCombatComponent::Server_FireWeapon_Implementation(const FHitResult& HitRes
 	}
 	
 	Multicast_FireWeapon(HitResult, CurrentWeapon->GetAmmo());
+}
+
+bool UCombatComponent::IsShotDistanceValid(const FHitResult& HitResult) const
+{
+	const APawn* Shooter = Cast<APawn>(GetOwner());
+	if (!IsValid(Shooter)) { return false; }
+	
+	FVector EyesWorldLocation;
+	FRotator EyesWorldRotation;
+	Shooter->GetActorEyesViewPoint(EyesWorldLocation, EyesWorldRotation);
+	
+	return FVector::Dist(EyesWorldLocation, HitResult.ImpactPoint) <= TraceLength * ShotDistanceTolerance;
+}
+
+bool UCombatComponent::IsHeadShot(const FHitResult& HitResult) const
+{
+	const AActor* Victim = HitResult.GetActor();
+	const UPrimitiveComponent* HitComponent = HitResult.GetComponent();
+	if (!IsValid(Victim) || !IsValid(HitComponent) || !Victim->Implements<UPlayerInterface>()) { return false; }
+	if (HitResult.BoneName == NAME_None) { return false; }
+	
+	// 服务器自行核对：命中组件必须是受害者的骨骼网格，且该骨骼真实存在
+	const USkeletalMeshComponent* Mesh = Cast<USkeletalMeshComponent>(HitComponent);
+	if (!IsValid(Mesh) || Mesh->GetBoneIndex(HitResult.BoneName) == INDEX_NONE) { return false; }
+	
+	return HitResult.BoneName == HeadBoneName;
 }
 
 void UCombatComponent::Multicast_FireWeapon_Implementation(const FHitResult& HitResult, int32 AuthAmmo)
@@ -569,6 +613,7 @@ void UCombatComponent::SetCurrentWeapon(AWeapon* NewWeapon, AWeapon* LastWeapon)
 	}
 	
 	CurrentWeapon = NewWeapon;
+	LastFireTime = -1000.0f;
 	APawn* OwningPawn = Cast<APawn>(GetOwner());
 	if (IsValid(OwningPawn) && IsValid(CurrentWeapon) && OwningPawn->HasAuthority())
 	{

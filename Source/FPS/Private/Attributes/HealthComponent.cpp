@@ -30,6 +30,9 @@ float UHealthComponent::GetHealthNormalized() const
 
 bool UHealthComponent::ChangeHealthByAmount(float Amount, AActor* Instigator)
 {
+	// 反作弊：血量仅允许服务器修改
+	if (!GetOwner() || !GetOwner()->HasAuthority()) { return false; }
+	
 	float OldValue = Health;
 	Health = FMath::Clamp(Health + Amount, 0.0f, MaxHealth);
 	
@@ -58,6 +61,9 @@ void UHealthComponent::StartDeath()
 
 void UHealthComponent::ChangeMaxHealthByAmount(float Amount, AActor* Instigator)
 {
+	// 反作弊：最大血量仅允许服务器修改
+	if (!GetOwner() || !GetOwner()->HasAuthority()) { return; }
+	
 	float OldValue = MaxHealth;
 	MaxHealth += Amount;
 	

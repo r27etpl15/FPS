@@ -44,13 +44,13 @@ AShooterCharacter::AShooterCharacter()
 	Mesh1P->bOwnerNoSee = false;
 	Mesh1P->bCastDynamicShadow = false;
 	Mesh1P->bReceivesDecals = false;
-	Mesh1P->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered;
+	Mesh1P->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickMontagesWhenNotRendered;
 	Mesh1P->PrimaryComponentTick.TickGroup = TG_PrePhysics;
 	
 	GetMesh()->bOnlyOwnerSee = false;
 	GetMesh()->bOwnerNoSee = true;
 	GetMesh()->bReceivesDecals = false;
-	GetMesh()->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered;
+	GetMesh()->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickMontagesWhenNotRendered;
 	
 	GetCharacterMovement()->MovementState.bCanCrouch = true;
 	
@@ -250,6 +250,8 @@ void AShooterCharacter::AddAmmo_Implementation(const FGameplayTag& WeaponType, i
 
 bool AShooterCharacter::DoDamage_Implementation(float DamageAmount, AActor* DamageInstigator)
 {
+	// 反作弊：伤害结算仅允许在服务器执行
+	if (!HasAuthority()) { return false; }
 	if (!IsValid(HealthComponent)) { return false; }
 	
 	// 致命攻击则不播放受击动画
