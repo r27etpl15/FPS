@@ -62,6 +62,8 @@ void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 	ResponseParams.CollisionResponse.SetAllChannels(ECR_Ignore);
 	ResponseParams.CollisionResponse.SetResponse(ECC_Pawn, ECR_Block);
 	ResponseParams.CollisionResponse.SetResponse(ECC_PhysicsBody, ECR_Block);
+	ResponseParams.CollisionResponse.SetResponse(ECC_WorldStatic, ECR_Block);
+	ResponseParams.CollisionResponse.SetResponse(ECC_WorldDynamic, ECR_Block);
 	
 	GetWorld()->LineTraceSingleByChannel(
 		HitResult,
