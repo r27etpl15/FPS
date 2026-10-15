@@ -1,0 +1,31 @@
+﻿// Fill out your copyright notice in the Description page of Project Settings.
+
+#pragma once
+
+#include "CoreMinimal.h"
+#include "Blueprint/UserWidget.h"
+#include "PingWidget.generated.h"
+
+class UTextBlock;
+/**
+ * 
+ */
+UCLASS()
+class FPS_API UPingWidget : public UUserWidget
+{
+	GENERATED_BODY()
+	
+public:
+	virtual void NativeOnInitialized() override;
+	virtual void NativeDestruct() override;
+	
+	UPROPERTY(meta=(BindWidget))
+	TObjectPtr<UTextBlock> Text_Ping;
+	
+private:
+	UFUNCTION()
+	void UpdateTextPing();
+	
+	UFUNCTION()
+	void OnPlayerStateReplicated();
+};
