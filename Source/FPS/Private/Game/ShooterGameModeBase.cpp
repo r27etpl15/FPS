@@ -6,6 +6,7 @@
 #include "GameFramework/Character.h"
 #include "GameFramework/PlayerStart.h"
 #include "Kismet/GameplayStatics.h"
+#include "Player/ShooterPlayerController.h"
 
 void AShooterGameModeBase::RequestRespawn(ACharacter* Character, AController* Controller)
 {
@@ -20,4 +21,10 @@ void AShooterGameModeBase::RequestRespawn(ACharacter* Character, AController* Co
 	int32 Selection = FMath::RandRange(0, PlayerStarts.Num() - 1);
 	
 	RestartPlayerAtPlayerStart(Controller, PlayerStarts[Selection]);
+	
+	// 重生后恢复输入
+	if (AShooterPlayerController* PC = Cast<AShooterPlayerController>(Controller))
+	{
+		PC->SetPawnAlive(true);
+	}
 }

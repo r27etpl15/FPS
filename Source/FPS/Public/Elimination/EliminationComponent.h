@@ -42,7 +42,7 @@ private:
 	void UpdateLeaderStatus(AShooterGameStateBase* GameState, ESpecialElimType& OutSpecialElimType, AShooterPlayerState* AttackerPlayerState, AShooterPlayerState* VictimPlayerState);
 	
 	UPROPERTY(EditDefaultsOnly, Category="FPS|Elimination", meta=(AllowPrivateAccess = "true"))
-	int32 ElimsNeededForStreak = 2;
+	int32 ElimsNeededForStreak = 5;
 	
 	float LastElimTime = 0.0f;
 	int32 SequentialElims = 0;

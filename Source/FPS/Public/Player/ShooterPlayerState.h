@@ -10,6 +10,9 @@ struct FSpecialElimInfo;
 class USpecialElimWidget;
 class USpecialElimData;
 enum class ESpecialElimType : uint16;
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FScoreChanged, int32, NewScore);
+
 /**
  * 
  */
@@ -48,6 +51,9 @@ public:
 	
 	UFUNCTION(Client, Reliable)
 	void Client_SpecialElim(const ESpecialElimType& SpecialElim, int32 SequentialElimCount, int32 StreakCount, int32 ElimScore);
+	
+	UPROPERTY(BlueprintAssignable)
+	FScoreChanged OnScoreChanged;
 	
 private:
 	bool bWinner = false;
