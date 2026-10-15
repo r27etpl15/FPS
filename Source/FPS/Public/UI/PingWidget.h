@@ -7,6 +7,7 @@
 #include "PingWidget.generated.h"
 
 class UTextBlock;
+class AShooterPlayerState;
 /**
  * 
  */
@@ -22,7 +23,16 @@ public:
 	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<UTextBlock> Text_Ping;
 	
+	UPROPERTY(EditDefaultsOnly, Category="FPS|Ping")
+	float PingUpdateInterval = 0.5f;
+	
 private:
+	AShooterPlayerState* GetPlayerState() const;
+	void StartPingTimer();
+	void StopPingTimer();
+	
+	FTimerHandle PingTimerHandle;
+	
 	UFUNCTION()
 	void UpdateTextPing();
 	
