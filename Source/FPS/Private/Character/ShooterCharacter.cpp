@@ -186,6 +186,17 @@ void AShooterCharacter::PossessedBy(AController* NewController)
 	if (IsValid(CombatComponent))
 	{
 		CombatComponent->SpawnInventory();
+		
+		// SpawnInventory 的 UI 广播发生在 PossessedBy 期间，早于 UI 重绑（OnPossessedPawnChanged）；
+		// 下一帧再广播一次，确保 UI 已绑到新组件（修复监听主机复活后准星残留）
+		TWeakObjectPtr<UCombatComponent> WeakCombatComponent = CombatComponent;
+		GetWorldTimerManager().SetTimerForNextTick([WeakCombatComponent]()
+		{
+			if (WeakCombatComponent.IsValid())
+			{
+				WeakCombatComponent->InitializeWeaponWidgets();
+			}
+		});
 	}
 }
 
