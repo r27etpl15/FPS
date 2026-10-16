@@ -25,7 +25,6 @@ public:
 	void StopRefreshRowsTimer();
 	
 private:
-	AShooterPlayerState* GetPlayerState() const;
 	void RefreshRows();
 	
 	UFUNCTION()

@@ -35,24 +35,14 @@ void UScoreboardWidget::NativeDestruct()
 	Super::NativeDestruct();
 }
 
-AShooterPlayerState* UScoreboardWidget::GetPlayerState() const
-{
-	APlayerController* PlayerController = GetOwningPlayer();
-	if (IsValid(PlayerController))
-	{
-		return PlayerController->GetPlayerState<AShooterPlayerState>();
-	}
-	
-	return nullptr;
-}
-
 void UScoreboardWidget::RefreshRows()
 {
 	Box_PlayerInfos->ClearChildren();
 	
 	if (IsValid(Box_PlayerInfos))
 	{
-		TArray<APlayerState*> PlayerStates = GetWorld()->GetGameState()->PlayerArray;
+		UWorld* World = GetWorld();
+		TArray<APlayerState*> PlayerStates = World->GetGameState()->PlayerArray;
 		PlayerStates.Sort([](const APlayerState& A, const APlayerState& B)
 		{
 			const AShooterPlayerState* PlayerStateA = Cast<AShooterPlayerState>(&A);
