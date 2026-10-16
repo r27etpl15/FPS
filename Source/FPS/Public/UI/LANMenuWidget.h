@@ -24,6 +24,9 @@ private:
 	TObjectPtr<UEditableTextBox> TextBox_IpAddress;
 	
 	UPROPERTY(meta=(BindWidget))
+	TObjectPtr<UEditableTextBox> TextBox_PlayerName;
+	
+	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<UButton> Button_Host;
 	
 	UPROPERTY(meta=(BindWidget))

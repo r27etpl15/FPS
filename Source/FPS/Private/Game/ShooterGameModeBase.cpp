@@ -8,6 +8,20 @@
 #include "Kismet/GameplayStatics.h"
 #include "Player/ShooterPlayerController.h"
 
+FString AShooterGameModeBase::InitNewPlayer(APlayerController* NewPlayerController, const FUniqueNetIdRepl& UniqueId,
+	const FString& Options, const FString& Portal)
+{
+	// 先调用 Super 不然会把设置的名称给覆盖了
+	const FString ErrorMessage = Super::InitNewPlayer(NewPlayerController, UniqueId, Options, Portal);
+	
+	if (UGameplayStatics::ParseOption(Options, TEXT("Name")).IsEmpty())
+	{
+		ChangeName(NewPlayerController, FString::Printf(TEXT("Player%d"), PlayerNameCount++), false);
+	}
+	
+	return ErrorMessage;
+}
+
 void AShooterGameModeBase::RequestRespawn(ACharacter* Character, AController* Controller)
 {
 	if (!IsValid(Character) || !IsValid(Controller)) { return; }

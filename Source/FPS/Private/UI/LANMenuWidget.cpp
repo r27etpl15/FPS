@@ -3,6 +3,7 @@
 
 #include "UI/LANMenuWidget.h"
 
+#include "ShooterGameInstance.h"
 #include "Components/Button.h"
 #include "Components/EditableTextBox.h"
 #include "Kismet/GameplayStatics.h"
@@ -26,7 +27,22 @@ void ULANMenuWidget::HostButtonClicked()
 	GetOwningPlayer()->SetInputMode(InputModeGameOnly);
 	GetOwningPlayer()->SetShowMouseCursor(false);
 	
-	UGameplayStatics::OpenLevelBySoftObjectPtr(this, HostingLevel, true, TEXT("Listen"));	
+	UShooterGameInstance* GameInstance = Cast<UShooterGameInstance>(GetGameInstance());
+	if (IsValid(GameInstance))
+	{
+		GameInstance->SetPlayerName(TextBox_PlayerName->GetText().ToString().TrimStartAndEnd());
+	}
+	
+	const FString Name = IsValid(GameInstance) ? GameInstance->GetPlayerName() : FString();
+	const FString NameOption = Name.IsEmpty() ? FString() : FString::Printf(TEXT("?Name=%s"), *Name);
+	
+	FString Options = TEXT("Listen");
+	if (!NameOption.IsEmpty())
+	{
+		Options += NameOption;
+	}
+	
+	UGameplayStatics::OpenLevelBySoftObjectPtr(this, HostingLevel, true, Options);	
 }
 
 void ULANMenuWidget::JoinButtonClicked()
@@ -35,8 +51,17 @@ void ULANMenuWidget::JoinButtonClicked()
 	GetOwningPlayer()->SetInputMode(InputModeGameOnly);
 	GetOwningPlayer()->SetShowMouseCursor(false);
 	
+	UShooterGameInstance* GameInstance = Cast<UShooterGameInstance>(GetGameInstance());
+	if (IsValid(GameInstance))
+	{
+		GameInstance->SetPlayerName(TextBox_PlayerName->GetText().ToString().TrimStartAndEnd());
+	}
+	
+	const FString Name = IsValid(GameInstance) ? GameInstance->GetPlayerName() : FString();
+	const FString NameOption = Name.IsEmpty() ? FString() : FString::Printf(TEXT("Name=%s"), *Name);
+	
 	const FString Address = TextBox_IpAddress->GetText().ToString().TrimStartAndEnd();
-	UGameplayStatics::OpenLevel(this, *Address);
+	UGameplayStatics::OpenLevel(this, *Address, false, NameOption);
 }
 
 void ULANMenuWidget::QuitButtonClicked()

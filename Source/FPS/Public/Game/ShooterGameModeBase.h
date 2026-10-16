@@ -15,5 +15,10 @@ class FPS_API AShooterGameModeBase : public AGameModeBase
 	GENERATED_BODY()
 	
 public:
+	virtual FString InitNewPlayer(APlayerController* NewPlayerController, const FUniqueNetIdRepl& UniqueId, const FString& Options, const FString& Portal = L"") override;
+	
 	void RequestRespawn(ACharacter* Character, AController* Controller);
+	
+private:
+	int32 PlayerNameCount = 0;
 };
