@@ -14,10 +14,13 @@ FString AShooterGameModeBase::InitNewPlayer(APlayerController* NewPlayerControll
 	// 先调用 Super 不然会把设置的名称给覆盖了
 	const FString ErrorMessage = Super::InitNewPlayer(NewPlayerController, UniqueId, Options, Portal);
 	
-	if (UGameplayStatics::ParseOption(Options, TEXT("Name")).IsEmpty())
+	// 用自定义 key 取名字：引擎会用本地平台昵称覆盖 URL 里的 Name，所以不能用 Name
+	FString InName = UGameplayStatics::ParseOption(Options, TEXT("PlayerAlias"));
+	if (InName.IsEmpty())
 	{
-		ChangeName(NewPlayerController, FString::Printf(TEXT("Player%d"), PlayerNameCount++), false);
+		InName = FString::Printf(TEXT("Player%d"), ++PlayerNameCount);
 	}
+	ChangeName(NewPlayerController, InName, false);
 	
 	return ErrorMessage;
 }

@@ -34,7 +34,7 @@ void ULANMenuWidget::HostButtonClicked()
 	}
 	
 	const FString Name = IsValid(GameInstance) ? GameInstance->GetPlayerName() : FString();
-	const FString NameOption = Name.IsEmpty() ? FString() : FString::Printf(TEXT("?Name=%s"), *Name);
+	const FString NameOption = Name.IsEmpty() ? FString() : FString::Printf(TEXT("?PlayerAlias=%s"), *Name);
 	
 	FString Options = TEXT("Listen");
 	if (!NameOption.IsEmpty())
@@ -58,7 +58,7 @@ void ULANMenuWidget::JoinButtonClicked()
 	}
 	
 	const FString Name = IsValid(GameInstance) ? GameInstance->GetPlayerName() : FString();
-	const FString NameOption = Name.IsEmpty() ? FString() : FString::Printf(TEXT("Name=%s"), *Name);
+	const FString NameOption = Name.IsEmpty() ? FString() : FString::Printf(TEXT("PlayerAlias=%s"), *Name);
 	
 	const FString Address = TextBox_IpAddress->GetText().ToString().TrimStartAndEnd();
 	UGameplayStatics::OpenLevel(this, *Address, false, NameOption);
