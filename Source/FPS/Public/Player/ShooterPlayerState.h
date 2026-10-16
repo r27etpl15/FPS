@@ -24,6 +24,8 @@ class FPS_API AShooterPlayerState : public APlayerState
 public:
 	AShooterPlayerState();
 	
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
+	
 	void GotFirstBlood();
 	void IsNowWinner();
 	void SetOnStreak(bool bIsOnStreak);
@@ -40,8 +42,13 @@ public:
 	void AddShowStopperElim();
 	void AddSequentialElim(int32 SequenceCount);
 	void SetLastAttacker(APlayerState* Attacker);
+	
 	APlayerState* GetLastAttacker() const { return LastAttacker.IsValid() ? LastAttacker.Get() : nullptr; }
 	int32 GetScoredElims() const { return ScoredElims; }
+	int32 GetDefeats() const { return Defeats; }
+	int32 GetHeadShotElims() const { return HeadShotElims; }
+	float GetAccuracy() const { return (Hits + Misses) > 0 ? static_cast<float>(Hits) / (Hits + Misses) : 0.0f; }
+	int32 GetHighestStreak() const { return HighestStreak; }
 	
 	UFUNCTION(Client, Reliable)
 	void Client_LostTheLead();
@@ -60,12 +67,24 @@ private:
 	bool bOnStreak = false;		
 	bool bFirstBlood = false;				// 是否在连杀中
 	
+	UPROPERTY(Replicated)
 	int32 ScoredElims = 0;
+	
+	UPROPERTY(Replicated)
 	int32 HeadShotElims = 0;
+	
+	UPROPERTY(Replicated)
 	int32 Defeats = 0;
+	
+	UPROPERTY(Replicated)
 	int32 Hits = 0;
+	
+	UPROPERTY(Replicated)
 	int32 Misses = 0;
+	
+	UPROPERTY(Replicated)
 	int32 HighestStreak = 0;
+	
 	int32 RevengeElims = 0;
 	int32 DethroneElims = 0;				// 击杀排名第一的玩家
 	int32 ShowStopperElims = 0;				// 终结正在连杀的玩家

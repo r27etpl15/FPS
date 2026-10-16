@@ -20,13 +20,13 @@ class FPS_API UReserveAmmoWidget : public UUserWidget
 public:
 	virtual void NativeOnInitialized() override;
 	
+private:
 	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<UImage> Image_WeaponIcon;
 	
 	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<UTextBlock> Text_Ammo;
 	
-private:
 	UFUNCTION()
 	void OnPossessedPawnChanged(APawn* OldPawn, APawn* NewPawn);
 	

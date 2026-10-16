@@ -19,10 +19,10 @@ class FPS_API UScoreWidget : public UUserWidget
 public:
 	virtual void NativeOnInitialized() override;
 	
+private:
 	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<UTextBlock> Text_Score;
 	
-private:
 	AShooterPlayerState* GetPlayerState() const;
 	
 	UFUNCTION()

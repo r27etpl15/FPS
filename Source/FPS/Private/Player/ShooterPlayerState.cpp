@@ -4,11 +4,24 @@
 #include "Player/ShooterPlayerState.h"
 
 #include "Data/SpecialElimData.h"
+#include "Net/UnrealNetwork.h"
 #include "UI/Elims/SpecialElimWidget.h"
 
 AShooterPlayerState::AShooterPlayerState()
 {
 	SetNetUpdateFrequency(100.0f);
+}
+
+void AShooterPlayerState::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	
+	DOREPLIFETIME(ThisClass, ScoredElims);
+	DOREPLIFETIME(ThisClass, HeadShotElims);
+	DOREPLIFETIME(ThisClass, Defeats);
+	DOREPLIFETIME(ThisClass, Hits);
+	DOREPLIFETIME(ThisClass, Misses);
+	DOREPLIFETIME(ThisClass, HighestStreak);
 }
 
 void AShooterPlayerState::GotFirstBlood()

@@ -23,13 +23,13 @@ public:
 	virtual void NativeOnInitialized() override;
 	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 	
+private:
 	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<UImage> Image_Reticle;
 	
 	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<UImage> Image_AmmoCounter;
 	
-private:
 	TWeakObjectPtr<UMaterialInstanceDynamic> CurrentReticle_DynamicMaterialInstance;
 	TWeakObjectPtr<UMaterialInstanceDynamic> CurrentAmmoCounter_DynamicMaterialInstance;
 	

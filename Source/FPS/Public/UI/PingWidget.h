@@ -19,7 +19,8 @@ class FPS_API UPingWidget : public UUserWidget
 public:
 	virtual void NativeOnInitialized() override;
 	virtual void NativeDestruct() override;
-	
+
+protected:
 	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<UTextBlock> Text_Ping;
 	
