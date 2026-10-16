@@ -40,4 +40,7 @@ private:
 	
 	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<UTextBlock> Text_Ping;
+	
+	UPROPERTY(EditDefaultsOnly, Category="FPS|Row")
+	FSlateColor LocalPlayerTextColor = FSlateColor(FLinearColor::Green);
 };

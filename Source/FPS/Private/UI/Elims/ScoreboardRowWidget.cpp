@@ -48,4 +48,17 @@ void UScoreboardRowWidget::SetScoreboardRowText(APlayerState* PlayerState)
 			Text_Ping->SetText(FText::FromString(FString::Printf(TEXT("%d"), FMath::RoundToInt(PingMilliseconds))));	
 		}
 	}
+	
+	if (!IsValid(GetOwningPlayer())) { return; }
+	
+	if (GetOwningPlayer()->PlayerState == PlayerState)
+	{
+		Text_Name->SetColorAndOpacity(LocalPlayerTextColor);
+		Text_Kills->SetColorAndOpacity(LocalPlayerTextColor);
+		Text_Deaths->SetColorAndOpacity(LocalPlayerTextColor);
+		Text_HeadShots->SetColorAndOpacity(LocalPlayerTextColor);
+		Text_HighestStreak->SetColorAndOpacity(LocalPlayerTextColor);
+		Text_Accuracy->SetColorAndOpacity(LocalPlayerTextColor);
+		Text_Ping->SetColorAndOpacity(LocalPlayerTextColor);
+	}
 }
