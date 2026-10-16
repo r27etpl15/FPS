@@ -40,6 +40,8 @@ void AShooterPlayerController::SetupInputComponent()
 	ShooterInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ThisClass::InputLook);
 	ShooterInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ThisClass::InputJump);
 	ShooterInputComponent->BindAction(CrouchAction, ETriggerEvent::Started, this, &ThisClass::InputCrouch);
+	ShooterInputComponent->BindAction(ScoreboardAction, ETriggerEvent::Started, this, &ThisClass::InputScoreboardStarted);
+	ShooterInputComponent->BindAction(ScoreboardAction, ETriggerEvent::Completed, this, &ThisClass::InputScoreboardCompleted);
 }
 
 void AShooterPlayerController::InputCrouch()
@@ -99,4 +101,14 @@ void AShooterPlayerController::InputLook(const FInputActionValue& InputActionVal
 	
 	AddYawInput(InputAxisVector.X);
 	AddPitchInput(InputAxisVector.Y);
+}
+
+void AShooterPlayerController::InputScoreboardStarted()
+{
+	OnScoreboardDisplayChanged.Broadcast(true);
+}
+
+void AShooterPlayerController::InputScoreboardCompleted()
+{
+	OnScoreboardDisplayChanged.Broadcast(false);
 }

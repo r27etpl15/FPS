@@ -13,28 +13,23 @@ void UScoreboardWidget::NativeOnInitialized()
 {
 	Super::NativeOnInitialized();
 	
-	AShooterPlayerState* PlayerState = GetPlayerState();
-	if (IsValid(PlayerState))
+	AShooterPlayerController* PlayerController = Cast<AShooterPlayerController>(GetOwningPlayer());
+	if (IsValid(PlayerController))
 	{
-		StartRefreshRowsTimer();
+		PlayerController->OnScoreboardDisplayChanged.AddDynamic(this, &ThisClass::OnOnScoreboardDisplayChanged);
 	}
-	else
-	{
-		AShooterPlayerController* PlayerController = Cast<AShooterPlayerController>(GetOwningPlayer());
-		if (IsValid(PlayerController))
-		{
-			PlayerController->OnPlayerStateReplicated.AddDynamic(this, &ThisClass::OnPlayerStateReplicated);
-		}
-	}
+	
+	SetVisibility(ESlateVisibility::Hidden);
 }
 
 void UScoreboardWidget::NativeDestruct()
 {
 	StopRefreshRowsTimer();
 	
-	if (AShooterPlayerController* PlayerController = Cast<AShooterPlayerController>(GetOwningPlayer()))
+	AShooterPlayerController* PlayerController = Cast<AShooterPlayerController>(GetOwningPlayer());
+	if (IsValid(PlayerController))
 	{
-		PlayerController->OnPlayerStateReplicated.RemoveDynamic(this, &ThisClass::OnPlayerStateReplicated);
+		PlayerController->OnScoreboardDisplayChanged.RemoveDynamic(this, &ThisClass::OnOnScoreboardDisplayChanged);
 	}
 	
 	Super::NativeDestruct();
@@ -94,15 +89,18 @@ void UScoreboardWidget::StopRefreshRowsTimer()
 	}
 }
 
-void UScoreboardWidget::OnPlayerStateReplicated()
+void UScoreboardWidget::OnOnScoreboardDisplayChanged(bool bDisplayScoreboard)
 {
-	if (!IsValid(GetPlayerState())) { return; }
-	
-	StartRefreshRowsTimer();
-	
-	AShooterPlayerController* PlayerController = Cast<AShooterPlayerController>(GetOwningPlayer());
-	if (IsValid(PlayerController))
+	if (bDisplayScoreboard)
 	{
-		PlayerController->OnPlayerStateReplicated.RemoveDynamic(this, &ThisClass::OnPlayerStateReplicated);
+		SetVisibility(ESlateVisibility::Visible);
+		
+		StartRefreshRowsTimer();
+	}
+	else
+	{
+		SetVisibility(ESlateVisibility::Hidden);
+		
+		StopRefreshRowsTimer();
 	}
 }

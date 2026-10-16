@@ -11,6 +11,7 @@ class UInputMappingContext;
 struct FInputActionValue;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FPlayerStateReplicated);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FScoreboardDisplayChanged, bool, bDisplayScoreboard);
 
 /**
  * 
@@ -30,6 +31,9 @@ public:
 	
 	UPROPERTY(BlueprintAssignable)
 	FPlayerStateReplicated OnPlayerStateReplicated;
+	
+	UPROPERTY(BlueprintAssignable)
+	FScoreboardDisplayChanged OnScoreboardDisplayChanged;
 	
 protected:
 	virtual void BeginPlay() override;
@@ -51,10 +55,15 @@ private:
 	UPROPERTY(EditAnywhere, Category="FPS|Input")
 	TObjectPtr<UInputAction> JumpAction;
 	
+	UPROPERTY(EditAnywhere, Category="FPS|Input")
+	TObjectPtr<UInputAction> ScoreboardAction;
+	
 	bool bPawnAlive = true;
 	
 	void InputCrouch();
 	void InputJump();
 	void InputMove(const FInputActionValue& InputActionValue);
 	void InputLook(const FInputActionValue& InputActionValue);
+	void InputScoreboardStarted();
+	void InputScoreboardCompleted();
 };

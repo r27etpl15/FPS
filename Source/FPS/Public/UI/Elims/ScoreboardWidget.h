@@ -21,14 +21,15 @@ public:
 	virtual void NativeOnInitialized() override;
 	virtual void NativeDestruct() override;
 	
-private:
-	AShooterPlayerState* GetPlayerState() const;
-	void RefreshRows();
 	void StartRefreshRowsTimer();
 	void StopRefreshRowsTimer();
 	
+private:
+	AShooterPlayerState* GetPlayerState() const;
+	void RefreshRows();
+	
 	UFUNCTION()
-	void OnPlayerStateReplicated();
+	void OnOnScoreboardDisplayChanged(bool bDisplayScoreboard);
 	
 	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<UVerticalBox> Box_PlayerInfos;
