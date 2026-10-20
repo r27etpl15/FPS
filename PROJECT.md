@@ -185,7 +185,7 @@
 `UCombatComponent::Local_FireWeapon()`（本地，拥有者客户端）：
 
 1. 设置武器状态 `Firing`，播放 1P/3P 角色开火蒙太奇；
-2. `WeaponTrace()` 本地射线（`SweepSingleByChannel`，自定义 `ECC_Weapon`，球形半径 `TraceRadius`）；
+2. `WeaponTrace()` 本地球形扫掠（`Sphere Sweep`：`SweepSingleByChannel` + `MakeSphere(TraceRadius)`，自定义 `ECC_Weapon`）；
 3. `Local_Fire()` 播放特效、扣本地弹药（本地控制时）、递增 `Sequence`；
 4. 广播 `OnRoundFired`（UI 刷新），启动 `FireTimer`（射速节奏），自动武器在 `FireTimerFinished` 连发；
 5. 调用 `Server_FireWeapon(HitResult)` 上报命中结果。
@@ -443,7 +443,7 @@ namespace FPSTraceChannels
     constexpr ECollisionChannel ECC_Weapon = ECC_GameTraceChannel1;
 }
 ```
-武器射线走自定义 `Weapon` 通道；角色/武器相关逻辑据此设置响应。
+武器扫掠走自定义 `Weapon` 通道；角色/武器相关逻辑据此设置响应。
 
 ### 10.3 `DefaultInput.ini` / `DefaultGame.ini`
 
