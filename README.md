@@ -1,7 +1,7 @@
 # FPS · UE5 多人联机第一人称射击
 
 基于 **Unreal Engine 5.8 + C++** 的多人联机 FPS：战斗、击杀计分、UI 与局域网联机。
-演示视频:
+演示视频:  https://www.bilibili.com/video/BV1tHnc6zEd5/?share_source=copy_web&vd_source=92f3e22dd322afd6c14ab4ea29c7b8fb
 可游玩 Demo: https://pan.baidu.com/s/16UytfZ1hihGHMDvZTcQauQ?pwd=mwrd 提取码: mwrd
 
 `C++` · `网络同步` · `客户端预测` · `服务器权威` · `Enhanced Input` · `UMG`
