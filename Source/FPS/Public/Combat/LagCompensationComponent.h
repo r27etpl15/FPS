@@ -34,7 +34,6 @@ public:
 	void ClearHistory();
 
 	FHitResult RewindTrace(
-		const AActor* Shooter,
 		const FVector& ViewLocation,
 		const FVector& ViewDirection,
 		float MaxDistance,

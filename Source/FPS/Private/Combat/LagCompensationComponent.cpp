@@ -3,9 +3,11 @@
 #include "Attributes/HealthComponent.h"
 #include "Character/ShooterCharacter.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "DrawDebugHelpers.h"
 #include "Engine/World.h"
 #include "EngineUtils.h"
+#include "KismetTraceUtils.h"
 #include "FPS/FPS.h"
 #include "GameFramework/Character.h"
 #include "Interfaces/PlayerInterface.h"
@@ -87,9 +89,7 @@ void ULagCompensationComponent::CaptureSnapshot()
 	}
 }
 
-bool ULagCompensationComponent::GetSnapshotAtTime(
-	const double TimeSeconds,
-	FHitboxSnapshot& OutSnapshot) const
+bool ULagCompensationComponent::GetSnapshotAtTime(const double TimeSeconds, FHitboxSnapshot& OutSnapshot) const
 {
 	if (History.Num() == 0) { return false; }
 
@@ -115,7 +115,6 @@ void ULagCompensationComponent::ClearHistory()
 }
 
 FHitResult ULagCompensationComponent::RewindTrace(
-	const AActor* Shooter,
 	const FVector& ViewLocation,
 	const FVector& ViewDirection,
 	const float MaxDistance,
@@ -132,12 +131,10 @@ FHitResult ULagCompensationComponent::RewindTrace(
 
 	const FVector Direction = ViewDirection.GetSafeNormal();
 	const FVector TraceEnd = ViewLocation + Direction * MaxDistance;
-
-	FCollisionQueryParams QueryParams(FName(TEXT("LagCompensationTrace")), false, Shooter);
-	for (TActorIterator<AWeapon> It(GetWorld()); It; ++It)
-	{
-		QueryParams.AddIgnoredActor(*It);
-	}
+	
+	const AActor* Player = GetOwner();
+	FCollisionQueryParams QueryParams(FName(TEXT("LagCompensationTrace")), false);
+	QueryParams.AddIgnoredActor(Player);
 
 	FCollisionResponseParams ResponseParams;
 	ResponseParams.CollisionResponse.SetAllChannels(ECR_Ignore);
@@ -151,7 +148,7 @@ FHitResult ULagCompensationComponent::RewindTrace(
 	for (TActorIterator<AShooterCharacter> It(GetWorld()); It; ++It)
 	{
 		AShooterCharacter* Target = *It;
-		if (!IsValid(Target) || Target == Shooter) { continue; }
+		if (!IsValid(Target) || Target == Player) { continue; }
 		if (!Target->Implements<UPlayerInterface>()) { continue; }
 
 		if (const UHealthComponent* TargetHealth = UHealthComponent::FindHealthComponent(Target))
@@ -183,18 +180,17 @@ FHitResult ULagCompensationComponent::RewindTrace(
 
 		if (bDrawDebug)
 		{
-			const UCapsuleComponent* Capsule = Target->GetCapsuleComponent();
-			if (IsValid(Capsule))
+			if (const USkeletalMeshComponent* Mesh = Target->GetMesh())
 			{
-				DrawDebugCapsule(
+				const FBoxSphereBounds MeshBounds = Mesh->Bounds;
+				DrawDebugBox(
 					GetWorld(),
-					Capsule->GetComponentLocation(),
-					Capsule->GetScaledCapsuleHalfHeight(),
-					Capsule->GetScaledCapsuleRadius(),
+					MeshBounds.Origin,
+					MeshBounds.BoxExtent,
 					FQuat::Identity,
-					FColor::Yellow,
+					FColor::Cyan,
 					false,
-					1.0f);
+					5.0f);
 			}
 			DrawDebugSphere(
 				GetWorld(),
@@ -203,29 +199,25 @@ FHitResult ULagCompensationComponent::RewindTrace(
 				12,
 				FColor::Red,
 				false,
-				1.0f);
+				5.0f);
 		}
 	}
 
 	FHitResult HitResult;
-	GetWorld()->SweepSingleByChannel(
+	bool bHit = GetWorld()->SweepSingleByChannel(
 		HitResult,
 		ViewLocation,
 		TraceEnd,
 		FQuat::Identity,
 		FPSTraceChannels::ECC_Weapon,
-		FCollisionShape::MakeSphere(FMath::Max(0.0f, TraceRadius)),
+		FCollisionShape::MakeSphere(TraceRadius),
 		QueryParams,
 		ResponseParams);
-
-	if (!HitResult.bBlockingHit)
+	
+	// 防止没有命中时子弹轨迹朝向世界原点
+	if (!bHit)
 	{
 		HitResult.ImpactPoint = TraceEnd;
-		HitResult.Location = TraceEnd;
-		HitResult.ImpactNormal = -Direction;
-		HitResult.TraceStart = ViewLocation;
-		HitResult.TraceEnd = TraceEnd;
-		HitResult.Distance = MaxDistance;
 	}
 
 	// 爆头只由服务器头部球判定，不采信真实扫掠返回的骨骼名
@@ -257,18 +249,21 @@ FHitResult ULagCompensationComponent::RewindTrace(
 			nullptr,
 			ETeleportType::TeleportPhysics);
 	}
-
+	
 	if (bDrawDebug)
 	{
-		DrawDebugLine(
+		DrawDebugSphereTraceSingle(
 			GetWorld(),
 			ViewLocation,
-			HitResult.bBlockingHit ? HitResult.ImpactPoint : TraceEnd,
-			FColor::Green,
-			false,
-			1.0f,
-			0,
-			1.0f);
+			TraceEnd,
+			TraceRadius,
+			EDrawDebugTrace::ForDuration,
+			bHit,
+			HitResult,
+			FLinearColor::Yellow,
+			FLinearColor::Red,
+			5.0f
+		);	
 	}
 
 	return HitResult;

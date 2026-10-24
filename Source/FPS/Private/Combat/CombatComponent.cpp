@@ -328,7 +328,6 @@ void UCombatComponent::Server_FireWeapon_Implementation(const FVector_NetQuantiz
 	if (!IsValid(LagCompensationComponent)) { return; }
 	
 	const FHitResult HitResult = LagCompensationComponent->RewindTrace(
-		GetOwner(),
 		Start,
 		Direction,
 		TraceLength,
