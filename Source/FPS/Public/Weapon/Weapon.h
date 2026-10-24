@@ -39,6 +39,7 @@ public:
 	USkeletalMeshComponent* GetMesh1P() const { return Mesh1P; }
 	USkeletalMeshComponent* GetMesh3P() const { return Mesh3P; }
 	float GetFireTime() const { return FireTime; }
+	float GetTraceRadius() const { return TraceRadius; }
 	EFireType GetFireType() const { return FireType; }
 	int32 GetAmmo() const { return Ammo; }
 	int32 GetMagCapacity() const { return MagCapacity; }
@@ -89,7 +90,7 @@ private:
 	float AimFOV = 65.0f;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="FPS|Trace", meta=(AllowPrivateAccess = "true"))
-	float TraceRadius = 3.0f;
+	float TraceRadius = 1.5f;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="FPS|Trace", meta=(AllowPrivateAccess = "true"))
 	bool bShowDebugSphereTrace = false;

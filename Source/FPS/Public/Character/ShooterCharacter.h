@@ -11,6 +11,7 @@ class UEliminationComponent;
 class UHealthComponent;
 class UInputAction;
 class UCombatComponent;
+class ULagCompensationComponent;
 class UCameraComponent;
 class USpringArmComponent;
 enum class ETurningInPlace : uint8;
@@ -44,6 +45,7 @@ public:
 	//~ End UPlayerInterface Interface
 	
 	bool HasWeaponFirstReplicated() const { return bWeaponFirstReplicated; }
+	ULagCompensationComponent* GetLagCompensationComponent() const { return LagCompensationComponent; }
 	
 	// 修复 GetBaseAimRotation() 压缩后数值范围问题
 	UFUNCTION(BlueprintCallable)
@@ -127,6 +129,9 @@ private:
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="FPS|Elimination", meta=(AllowPrivateAccess = "true"))
 	TObjectPtr<UEliminationComponent> EliminationComponent;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="FPS|LagCompensation", meta=(AllowPrivateAccess = "true"))
+	TObjectPtr<ULagCompensationComponent> LagCompensationComponent;
 	
 	// 输入
 	UPROPERTY(EditAnywhere, Category="FPS|Input")

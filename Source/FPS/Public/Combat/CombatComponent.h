@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
 #include "Components/ActorComponent.h"
+#include "Engine/NetSerialization.h"
 #include "ShooterTypes/ShooterTypes.h"
 #include "CombatComponent.generated.h"
 
@@ -96,8 +97,14 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category="FPS|AntiCheat")
 	float FireRateTolerance = 0.8f;
 	
-	UPROPERTY(EditDefaultsOnly, Category="FPS|AntiCheat")
-	float ShotDistanceTolerance = 1.1f;
+	UPROPERTY(EditDefaultsOnly, Category="FPS|LagCompensation")
+	float MaxRewindSeconds = 0.5f;
+	
+	UPROPERTY(EditDefaultsOnly, Category="FPS|LagCompensation")
+	float ViewAngleTolerance = 30.0f;
+	
+	UPROPERTY(EditDefaultsOnly, Category="FPS|LagCompensation")
+	float ViewOriginTolerance = 100.0f;
 	
 	UPROPERTY(EditDefaultsOnly, Category="FPS|AntiCheat")
 	FName HeadBoneName = FName("head");
@@ -112,9 +119,6 @@ private:
 	float AccumulatedRecoilYaw = 0.0f;
 	
 	float LastFireTime = -1000.0f;
-	
-	bool IsShotDistanceValid(const FHitResult& HitResult) const;
-	bool IsHeadShot(const FHitResult& HitResult) const;
 	
 	UPROPERTY(Transient, Replicated)
 	TArray<TObjectPtr<AWeapon>> Inventory;
@@ -155,7 +159,7 @@ private:
 	void Server_Aim(bool bPressed);
 	
 	UFUNCTION(Server, Reliable)
-	void Server_FireWeapon(const FHitResult& HitResult);
+	void Server_FireWeapon(const FVector_NetQuantize& ViewLocation, const FVector_NetQuantizeNormal& ViewDirection, double ClientFireTime);
 	
 	UFUNCTION(Server, Reliable)
 	void Server_DryFire();

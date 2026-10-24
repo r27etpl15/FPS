@@ -3,9 +3,13 @@
 
 #include "Combat/CombatComponent.h"
 
+#include "Attributes/HealthComponent.h"
+#include "Combat/LagCompensationComponent.h"
 #include "Data/WeaponData.h"
 #include "FPS/FPS.h"
+#include "GameFramework/GameStateBase.h"
 #include "GameFramework/PlayerController.h"
+#include "GameFramework/PlayerState.h"
 #include "Interfaces/PlayerInterface.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Net/UnrealNetwork.h"
@@ -269,7 +273,8 @@ void UCombatComponent::Initiate_FireWeaponReleased()
 	bTriggerPressed = false;
 }
 
-void UCombatComponent::Server_FireWeapon_Implementation(const FHitResult& HitResult)
+void UCombatComponent::Server_FireWeapon_Implementation(const FVector_NetQuantize& ViewLocation,
+	const FVector_NetQuantizeNormal& ViewDirection, const double ClientFireTime)
 {
 	if (!IsValid(CurrentWeapon)) { return; }
 	if (CurrentWeapon->GetAmmo() <= 0) { return; }
@@ -283,9 +288,56 @@ void UCombatComponent::Server_FireWeapon_Implementation(const FHitResult& HitRes
 	}
 	LastFireTime = CurrentTime;
 	
-	const bool bReportedHit = IsValid(HitResult.GetActor()) && HitResult.GetActor()->Implements<UPlayerInterface>();
-	const bool bValidHit = bReportedHit && IsShotDistanceValid(HitResult);
-	const bool bHeadShot = bValidHit && IsHeadShot(HitResult);
+	const FVector Start = ViewLocation;
+	const FVector Direction = ViewDirection.GetSafeNormal();
+	if (Direction.IsNearlyZero()) { return; }
+	
+	APawn* OwningPawn = Cast<APawn>(GetOwner());
+	if (!IsValid(OwningPawn)) { return; }
+	
+	FVector EyesWorldLocation;
+	FRotator EyesWorldRotation;
+	OwningPawn->GetActorEyesViewPoint(EyesWorldLocation, EyesWorldRotation);
+	
+	// 反作弊：客户端上报的开火起点必须靠近服务器眼位
+	if (FVector::DistSquared(Start, EyesWorldLocation) > FMath::Square(ViewOriginTolerance))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[AntiCheat] %s 开火起点异常，已拒绝"), *GetNameSafe(GetOwner()));
+		return;
+	}
+	
+	// 反作弊：客户端上报的方向不能偏离服务器控制旋转太多
+	const float MinDirectionDot = FMath::Cos(FMath::DegreesToRadians(ViewAngleTolerance));
+	if (FVector::DotProduct(Direction, EyesWorldRotation.Vector()) < MinDirectionDot)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[AntiCheat] %s 开火方向异常，已拒绝"), *GetNameSafe(GetOwner()));
+		return;
+	}
+	
+	const double ServerNow = GetWorld()->GetTimeSeconds();
+	double RewindTime = ClientFireTime;
+	if (!FMath::IsFinite(RewindTime) || RewindTime < ServerNow - MaxRewindSeconds || RewindTime > ServerNow + 0.05)
+	{
+		const APlayerState* PlayerState = OwningPawn->GetPlayerState();
+		const float PingSeconds = IsValid(PlayerState) ? PlayerState->GetPingInMilliseconds() / 2000.0f : 0.0f;
+		RewindTime = ServerNow - FMath::Min(static_cast<double>(PingSeconds), static_cast<double>(MaxRewindSeconds));
+	}
+	RewindTime = FMath::Clamp(RewindTime, ServerNow - MaxRewindSeconds, ServerNow);
+	
+	ULagCompensationComponent* LagCompensationComponent = OwningPawn->FindComponentByClass<ULagCompensationComponent>();
+	if (!IsValid(LagCompensationComponent)) { return; }
+	
+	const FHitResult HitResult = LagCompensationComponent->RewindTrace(
+		GetOwner(),
+		Start,
+		Direction,
+		TraceLength,
+		CurrentWeapon->GetTraceRadius(),
+		RewindTime,
+		HeadBoneName);
+	
+	const bool bValidHit = IsValid(HitResult.GetActor()) && HitResult.GetActor()->Implements<UPlayerInterface>();
+	const bool bHeadShot = bValidHit && HitResult.BoneName == HeadBoneName;
 	bool bLethal = false;
 	
 	if (bValidHit)
@@ -297,38 +349,12 @@ void UCombatComponent::Server_FireWeapon_Implementation(const FHitResult& HitRes
 	
 	OnRoundReported.Broadcast(GetOwner(), bValidHit ? HitResult.GetActor() : nullptr, bValidHit, bHeadShot, bLethal);
 	
-	if (GetNetMode() != NM_ListenServer || !Cast<APawn>(GetOwner())->IsLocallyControlled())
+	if (GetNetMode() != NM_ListenServer || !OwningPawn->IsLocallyControlled())
 	{
 		CurrentWeapon->Auth_Fire();
 	}
 	
 	Multicast_FireWeapon(HitResult, CurrentWeapon->GetAmmo());
-}
-
-bool UCombatComponent::IsShotDistanceValid(const FHitResult& HitResult) const
-{
-	const APawn* Shooter = Cast<APawn>(GetOwner());
-	if (!IsValid(Shooter)) { return false; }
-	
-	FVector EyesWorldLocation;
-	FRotator EyesWorldRotation;
-	Shooter->GetActorEyesViewPoint(EyesWorldLocation, EyesWorldRotation);
-	
-	return FVector::Dist(EyesWorldLocation, HitResult.ImpactPoint) <= TraceLength * ShotDistanceTolerance;
-}
-
-bool UCombatComponent::IsHeadShot(const FHitResult& HitResult) const
-{
-	const AActor* Victim = HitResult.GetActor();
-	const UPrimitiveComponent* HitComponent = HitResult.GetComponent();
-	if (!IsValid(Victim) || !IsValid(HitComponent) || !Victim->Implements<UPlayerInterface>()) { return false; }
-	if (HitResult.BoneName == NAME_None) { return false; }
-	
-	// 服务器自行核对：命中组件必须是受害者的骨骼网格，且该骨骼真实存在
-	const USkeletalMeshComponent* Mesh = Cast<USkeletalMeshComponent>(HitComponent);
-	if (!IsValid(Mesh) || Mesh->GetBoneIndex(HitResult.BoneName) == INDEX_NONE) { return false; }
-	
-	return HitResult.BoneName == HeadBoneName;
 }
 
 void UCombatComponent::Multicast_FireWeapon_Implementation(const FHitResult& HitResult, int32 AuthAmmo)
@@ -375,6 +401,25 @@ void UCombatComponent::Local_FireWeapon()
 	if (!IsValid(CurrentWeapon)) { return; }
 	ensure(IsValid(WeaponData));
 	
+	APawn* OwningPawn = Cast<APawn>(GetOwner());
+	APlayerController* PlayerController = IsValid(OwningPawn) ? Cast<APlayerController>(OwningPawn->GetController()) : nullptr;
+	if (!IsValid(PlayerController)) { return; }
+	
+	FVector ViewLocation;
+	FRotator ViewRotation;
+	PlayerController->GetActorEyesViewPoint(ViewLocation, ViewRotation);
+	const FVector ViewDirection = UKismetMathLibrary::GetForwardVector(ViewRotation);
+	
+	double ClientFireTime = GetWorld()->GetTimeSeconds();
+	if (const AGameStateBase* GameState = GetWorld()->GetGameState())
+	{
+		const double ServerWorldTime = GameState->GetServerWorldTimeSeconds();
+		if (ServerWorldTime > 0.0)
+		{
+			ClientFireTime = ServerWorldTime;
+		}
+	}
+	
 	CurrentWeapon->SetWeaponStatus(EWeaponStatus::Firing);
 	
 	UAnimMontage* Montage1P = WeaponData->FirstPersonMontages.FindChecked(CurrentWeapon->GetWeaponTypeTag()).FireMontage;
@@ -397,7 +442,10 @@ void UCombatComponent::Local_FireWeapon()
 	
 	GetWorld()->GetTimerManager().SetTimer(FireTimer, this, &ThisClass::FireTimerFinished, CurrentWeapon->GetFireTime());
 	
-	Server_FireWeapon(HitResult);
+	Server_FireWeapon(
+		FVector_NetQuantize(ViewLocation),
+		FVector_NetQuantizeNormal(ViewDirection),
+		ClientFireTime);
 }
 
 void UCombatComponent::ApplyRecoil()

@@ -7,6 +7,7 @@
 #include "Attributes/HealthComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Combat/CombatComponent.h"
+#include "Combat/LagCompensationComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Data/WeaponData.h"
 #include "Elimination/EliminationComponent.h"
@@ -58,6 +59,7 @@ AShooterCharacter::AShooterCharacter()
 	HealthComponent = CreateDefaultSubobject<UHealthComponent>(TEXT("HealthComponent"));
 	EliminationComponent = CreateDefaultSubobject<UEliminationComponent>(TEXT("EliminationComponent"));
 	EliminationComponent->SetIsReplicated(false);
+	LagCompensationComponent = CreateDefaultSubobject<ULagCompensationComponent>(TEXT("LagCompensationComponent"));
 	
 	DefaultFOV = 90.0f;
 	
@@ -312,6 +314,11 @@ void AShooterCharacter::OnDeathStarted()
 {
 	if (HasAuthority())
 	{
+		if (IsValid(LagCompensationComponent))
+		{
+			LagCompensationComponent->ClearHistory();
+		}
+		
 		CombatComponent->DestroyInventory();
 		GetWorld()->GetTimerManager().SetTimer(DeathTimer, this, &ThisClass::DeathTimerFinished, RespawnTime);
 	}
