@@ -50,13 +50,15 @@ void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 	
 	RecoverRecoil(DeltaTime);
 	
+	if (!IsValid(CurrentWeapon)) { return; }
+	
 	FVector EyesWorldLocation;
 	FRotator EyesWorldRotation;
 	PlayerController->GetActorEyesViewPoint(EyesWorldLocation, EyesWorldRotation);
 	const FVector EyesWorldDirection = UKismetMathLibrary::GetForwardVector(EyesWorldRotation);
 	
 	const FVector Start = EyesWorldLocation;
-	const FVector End = EyesWorldLocation + EyesWorldDirection * TraceLength;
+	const FVector End = EyesWorldLocation + EyesWorldDirection * CurrentWeapon->GetWeaponRange();
 	
 	FHitResult HitResult;
 	FCollisionQueryParams QueryParams;
@@ -330,10 +332,10 @@ void UCombatComponent::Server_FireWeapon_Implementation(const FVector_NetQuantiz
 	const FHitResult HitResult = LagCompensationComponent->RewindTrace(
 		Start,
 		Direction,
-		TraceLength,
+		CurrentWeapon->GetWeaponRange(),
 		CurrentWeapon->GetTraceRadius(),
-		RewindTime,
-		HeadBoneName);
+		RewindTime
+	);
 	
 	const bool bValidHit = IsValid(HitResult.GetActor()) && HitResult.GetActor()->Implements<UPlayerInterface>();
 	const bool bHeadShot = bValidHit && HitResult.BoneName == HeadBoneName;
@@ -430,7 +432,7 @@ void UCombatComponent::Local_FireWeapon()
 	}
 	
 	FHitResult HitResult;
-	CurrentWeapon->WeaponTrace(HitResult, TraceLength);
+	CurrentWeapon->WeaponTrace(HitResult);
 	
 	EPhysicalSurface ImpactSurfaceType = HitResult.PhysMaterial.IsValid(false) ? HitResult.PhysMaterial->SurfaceType.GetValue() : SurfaceType1;
 	CurrentWeapon->Local_Fire(HitResult.ImpactPoint, HitResult.ImpactNormal, ImpactSurfaceType, true);

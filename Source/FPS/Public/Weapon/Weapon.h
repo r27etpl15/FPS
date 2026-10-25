@@ -54,13 +54,14 @@ public:
 	float GetRecoilPitch() const { return RecoilPitch; }
 	float GetRecoilYaw() const { return RecoilYaw; }
 	float GetRecoilRecoverySpeed() const { return RecoilRecoverySpeed; }
+	float GetWeaponRange() const { return WeaponRange; }
 	
 	void SetWeaponStatus(const EWeaponStatus InWeaponStatus) { WeaponStatus = InWeaponStatus; }
 	void SetAmmo(const int32 InAmmo) { Ammo = InAmmo; }
 	
 	void AttachToOwningPawn(APawn* Pawn) const;
 	void DetachFromOwningPawn();
-	void WeaponTrace(FHitResult& OutHit, float TraceLength);
+	void WeaponTrace(FHitResult& OutHit);
 	void Local_Fire(const FVector& ImpactPoint, const FVector& ImpactNormal, TEnumAsByte<EPhysicalSurface> ImpactSurfaceType, bool bIsFirstPerson);
 	void Auth_Fire();
 	void Rep_fire(int32 AuthAmmo);
@@ -82,6 +83,9 @@ private:
 	// 面相第三人称
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="FPS|Weapon", meta=(AllowPrivateAccess = "true"))
 	TObjectPtr<USkeletalMeshComponent> Mesh3P;
+	
+	UPROPERTY(EditDefaultsOnly, Category="FPS|Weapon")
+	float WeaponRange = 100000;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FPS|WeaponType", meta=(AllowPrivateAccess = "true"))
 	FGameplayTag WeaponTypeTag;

@@ -6,13 +6,20 @@
 #include "Engine/HitResult.h"
 #include "LagCompensationComponent.generated.h"
 
-struct FHitboxSnapshot
+class AShooterCharacter;
+
+struct FLagCompSnapshot
 {
 	double TimeSeconds = 0.0;
 	FTransform ActorTransform = FTransform::Identity;
-	FVector HeadCenter = FVector::ZeroVector;
-	float HeadRadius = 14.f;
 };
+
+struct FMovedTarget
+{
+	AShooterCharacter* Target = nullptr;
+	FTransform OriginalTransform = FTransform::Identity;
+};
+
 
 /**
  * 服务延迟补偿：保存玩家历史 Transform，按开火时刻回滚目标后做真实 Trace。
@@ -30,7 +37,7 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
-	bool GetSnapshotAtTime(double TimeSeconds, FHitboxSnapshot& OutSnapshot) const;
+	bool GetSnapshotAtTime(double TimeSeconds, FLagCompSnapshot& OutSnapshot) const;
 	void ClearHistory();
 
 	FHitResult RewindTrace(
@@ -38,8 +45,7 @@ public:
 		const FVector& ViewDirection,
 		float MaxDistance,
 		float TraceRadius,
-		double RewindTime,
-		FName HeadBoneName
+		double RewindTime
 	) const;
 
 	UPROPERTY(EditDefaultsOnly, Category="FPS|LagCompensation")
@@ -49,13 +55,10 @@ public:
 	int32 MaxHistorySamples = 120;
 
 	UPROPERTY(EditDefaultsOnly, Category="FPS|LagCompensation")
-	float HeadRadius = 14.0f;
-
-	UPROPERTY(EditDefaultsOnly, Category="FPS|LagCompensation")
 	bool bDrawDebug = false;
 
 private:
-	TDeque<FHitboxSnapshot> History;
+	TDeque<FLagCompSnapshot> History;
 
 	void CaptureSnapshot();
 };

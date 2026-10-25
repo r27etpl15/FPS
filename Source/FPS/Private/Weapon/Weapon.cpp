@@ -81,7 +81,7 @@ void AWeapon::DetachFromOwningPawn()
 	Mesh3P->SetHiddenInGame(true);
 }
 
-void AWeapon::WeaponTrace(FHitResult& OutHit, float TraceLength)
+void AWeapon::WeaponTrace(FHitResult& OutHit)
 {
 	FCollisionQueryParams QueryParams;
 	QueryParams.bReturnPhysicalMaterial = true;
@@ -105,7 +105,7 @@ void AWeapon::WeaponTrace(FHitResult& OutHit, float TraceLength)
 		const FVector EyesWorldDirection = UKismetMathLibrary::GetForwardVector(EyesWorldRotation);
 		
 		const FVector Start = EyesWorldLocation;
-		const FVector End = EyesWorldLocation + EyesWorldDirection * TraceLength;
+		const FVector End = EyesWorldLocation + EyesWorldDirection * WeaponRange;
 
 		const bool bHit = GetWorld()->SweepSingleByChannel(
 			OutHit,

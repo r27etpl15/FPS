@@ -90,9 +90,6 @@ protected:
 	UFUNCTION()
 	void BlendOut_CycleWeapon(UAnimMontage* Montage, bool bInterrupted);
 	
-	UPROPERTY(EditDefaultsOnly, Category="FPS|Weapon")
-	float TraceLength = 20000;
-	
 	// 反作弊（服务器专用）
 	UPROPERTY(EditDefaultsOnly, Category="FPS|AntiCheat")
 	float FireRateTolerance = 0.8f;

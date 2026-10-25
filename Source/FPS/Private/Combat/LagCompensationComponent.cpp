@@ -2,7 +2,6 @@
 
 #include "Attributes/HealthComponent.h"
 #include "Character/ShooterCharacter.h"
-#include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "DrawDebugHelpers.h"
 #include "Engine/World.h"
@@ -11,7 +10,6 @@
 #include "FPS/FPS.h"
 #include "GameFramework/Character.h"
 #include "Interfaces/PlayerInterface.h"
-#include "Weapon/Weapon.h"
 
 ULagCompensationComponent::ULagCompensationComponent()
 {
@@ -52,8 +50,6 @@ void ULagCompensationComponent::EndPlay(const EEndPlayReason::Type EndPlayReason
 void ULagCompensationComponent::CaptureSnapshot()
 {
 	const ACharacter* Character = Cast<ACharacter>(GetOwner());
-	const UCapsuleComponent* Capsule = IsValid(Character) ? Character->GetCapsuleComponent() : nullptr;
-	if (!IsValid(Capsule)) { return; }
 
 	if (const UHealthComponent* HealthComponent = UHealthComponent::FindHealthComponent(GetOwner()))
 	{
@@ -63,17 +59,10 @@ void ULagCompensationComponent::CaptureSnapshot()
 			return;
 		}
 	}
-	
-	const FVector CapsuleCenter = Capsule->GetComponentLocation();
 
-	FHitboxSnapshot Snapshot;
+	FLagCompSnapshot Snapshot;
 	Snapshot.TimeSeconds = GetWorld()->GetTimeSeconds();
 	Snapshot.ActorTransform = Character->GetActorTransform();
-	Snapshot.HeadRadius = HeadRadius;
-	Snapshot.HeadCenter = CapsuleCenter + FVector(
-		0.0,
-		0.0,
-		FMath::Max(0.0f, Capsule->GetScaledCapsuleHalfHeight() - HeadRadius));
 
 	History.PushLast(Snapshot);
 
@@ -89,7 +78,7 @@ void ULagCompensationComponent::CaptureSnapshot()
 	}
 }
 
-bool ULagCompensationComponent::GetSnapshotAtTime(const double TimeSeconds, FHitboxSnapshot& OutSnapshot) const
+bool ULagCompensationComponent::GetSnapshotAtTime(const double TimeSeconds, FLagCompSnapshot& OutSnapshot) const
 {
 	if (History.Num() == 0) { return false; }
 
@@ -119,16 +108,9 @@ FHitResult ULagCompensationComponent::RewindTrace(
 	const FVector& ViewDirection,
 	const float MaxDistance,
 	const float TraceRadius,
-	const double RewindTime,
-	const FName HeadBoneName) const
+	const double RewindTime
+) const
 {
-	struct FMovedTarget
-	{
-		AShooterCharacter* Target = nullptr;
-		FTransform OriginalTransform = FTransform::Identity;
-		FHitboxSnapshot Snapshot;
-	};
-
 	const FVector Direction = ViewDirection.GetSafeNormal();
 	const FVector TraceEnd = ViewLocation + Direction * MaxDistance;
 	
@@ -159,7 +141,7 @@ FHitResult ULagCompensationComponent::RewindTrace(
 		const ULagCompensationComponent* TargetLagCompensation = Target->GetLagCompensationComponent();
 		if (!IsValid(TargetLagCompensation)) { continue; }
 
-		FHitboxSnapshot Snapshot;
+		FLagCompSnapshot Snapshot;
 		if (!TargetLagCompensation->GetSnapshotAtTime(RewindTime, Snapshot))
 		{
 			QueryParams.AddIgnoredActor(Target);
@@ -169,7 +151,6 @@ FHitResult ULagCompensationComponent::RewindTrace(
 		FMovedTarget MovedTarget;
 		MovedTarget.Target = Target;
 		MovedTarget.OriginalTransform = Target->GetActorTransform();
-		MovedTarget.Snapshot = Snapshot;
 		MovedTargets.Add(MovedTarget);
 
 		Target->SetActorTransform(
@@ -177,30 +158,6 @@ FHitResult ULagCompensationComponent::RewindTrace(
 			false,
 			nullptr,
 			ETeleportType::TeleportPhysics);
-
-		if (bDrawDebug)
-		{
-			if (const USkeletalMeshComponent* Mesh = Target->GetMesh())
-			{
-				const FBoxSphereBounds MeshBounds = Mesh->Bounds;
-				DrawDebugBox(
-					GetWorld(),
-					MeshBounds.Origin,
-					MeshBounds.BoxExtent,
-					FQuat::Identity,
-					FColor::Cyan,
-					false,
-					5.0f);
-			}
-			DrawDebugSphere(
-				GetWorld(),
-				Snapshot.HeadCenter,
-				Snapshot.HeadRadius,
-				12,
-				FColor::Red,
-				false,
-				5.0f);
-		}
 	}
 
 	FHitResult HitResult;
@@ -218,25 +175,6 @@ FHitResult ULagCompensationComponent::RewindTrace(
 	if (!bHit)
 	{
 		HitResult.ImpactPoint = TraceEnd;
-	}
-
-	// 爆头只由服务器头部球判定，不采信真实扫掠返回的骨骼名
-	HitResult.BoneName = NAME_None;
-
-	if (AShooterCharacter* HitTarget = Cast<AShooterCharacter>(HitResult.GetActor()))
-	{
-		for (const FMovedTarget& MovedTarget : MovedTargets)
-		{
-			if (MovedTarget.Target != HitTarget) { continue; }
-
-			const float HeadRadiusWithTrace = MovedTarget.Snapshot.HeadRadius + TraceRadius;
-			if (FVector::DistSquared(HitResult.ImpactPoint, MovedTarget.Snapshot.HeadCenter)
-				<= FMath::Square(HeadRadiusWithTrace))
-			{
-				HitResult.BoneName = HeadBoneName;
-			}
-			break;
-		}
 	}
 
 	for (const FMovedTarget& MovedTarget : MovedTargets)
