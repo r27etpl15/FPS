@@ -98,10 +98,10 @@ protected:
 	float MaxRewindSeconds = 0.5f;
 	
 	UPROPERTY(EditDefaultsOnly, Category="FPS|LagCompensation")
-	float ViewAngleTolerance = 30.0f;
+	float ViewAngleTolerance = 10.0f;
 	
 	UPROPERTY(EditDefaultsOnly, Category="FPS|LagCompensation")
-	float ViewOriginTolerance = 100.0f;
+	float ViewOriginTolerance = 20.0f;
 	
 	UPROPERTY(EditDefaultsOnly, Category="FPS|AntiCheat")
 	FName HeadBoneName = FName("head");
@@ -156,7 +156,7 @@ private:
 	void Server_Aim(bool bPressed);
 	
 	UFUNCTION(Server, Reliable)
-	void Server_FireWeapon(const FVector_NetQuantize& ViewLocation, const FVector_NetQuantizeNormal& ViewDirection, double ClientFireTime);
+	void Server_FireWeapon(const FVector_NetQuantize10& ViewLocation, const FVector_NetQuantizeNormal& ViewDirection, double ClientFireTime);
 	
 	UFUNCTION(Server, Reliable)
 	void Server_DryFire();

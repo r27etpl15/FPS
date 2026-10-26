@@ -116,6 +116,7 @@ FHitResult ULagCompensationComponent::RewindTrace(
 	
 	const AActor* Player = GetOwner();
 	FCollisionQueryParams QueryParams(FName(TEXT("LagCompensationTrace")), false);
+	QueryParams.bReturnPhysicalMaterial = true;
 	QueryParams.AddIgnoredActor(Player);
 
 	FCollisionResponseParams ResponseParams;

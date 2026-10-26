@@ -9,7 +9,7 @@
 | 主模块 | `FPS`（Type: Runtime，LoadingPhase: Default） |
 | 目标构建 | `FPSEditor`（编辑器）/ `FPS`（Game） |
 | 实现方式 | C++（Gameplay / 网络 / UI 基类）+ 蓝图（资产 / 表现 / 关卡） |
-| 网络模型 | 移动：引擎 CMC 预测；命中：客户端权威；伤害/血量/弹药/统计：服务器权威 |
+| 网络模型 | 移动：引擎 CMC 预测；命中：服务器权威 + 服务端回溯；伤害/血量/弹药/统计：服务器权威 |
 | 默认地图 | 菜单 `StartupMap`、游戏 `FPSMap` |
 
 ---
@@ -26,9 +26,8 @@
 8. [输入（Enhanced Input）](#8-输入enhanced-input)
 9. [联机与测试](#9-联机与测试)
 10. [配置说明](#10-配置说明)
-11. [已知问题 / TODO / 路线图](#11-已知问题--todo--路线图)
-12. [构建与运行](#12-构建与运行)
-13. [附录 A：类与文件索引](#附录-a类与文件索引)
+11. [构建与运行](#11-构建与运行)
+12. [附录 A：类与文件索引](#附录-a类与文件索引)
 
 ---
 
@@ -92,7 +91,7 @@
 |---|---|
 | `Attributes/` | `UHealthComponent`（生命值 / 最大生命 / 死亡状态） |
 | `Character/` | `AShooterCharacter`（角色：双网格、相机、原地转身、FABRIK、死亡重生） |
-| `Combat/` | `UCombatComponent`（武器栏、开火/换弹/切枪/瞄准、反作弊、后坐力） |
+| `Combat/` | `UCombatComponent`（武器栏、开火/换弹/切枪/瞄准、反作弊、后坐力）、`ULagCompensationComponent`（历史快照、目标回溯、服务器命中判定） |
 | `Data/` | `UWeaponData`、`USpecialElimData` 数据资产 |
 | `Elimination/` | `UEliminationComponent`（特殊淘汰判定与聚合） |
 | `Game/` | `AShooterGameModeBase`、`AShooterGameStateBase` |
@@ -127,9 +126,10 @@
 | `AShooterGameStateBase` | `AGameStateBase` | 领先者计算（`UpdateLeader` / `GetSoleLeader` / `IsTiedForTheLead`） |
 | `AShooterPlayerController` | `APlayerController` | Enhanced Input 绑定、存活标记、玩家名/State 就绪事件、计分板显隐事件 |
 | `AShooterPlayerState` | `APlayerState` | 统计字段（复制）、特殊淘汰 RPC / 弹窗队列 |
-| `AShooterCharacter` | `ACharacter` + `IPlayerInterface` | 角色实体，挂载 `CombatComponent` / `HealthComponent` / `EliminationComponent` |
-| `AWeapon` | `AActor` | 武器实体：双网格、弹道、弹药、准星/弹药材质 |
-| `UCombatComponent` | `UActorComponent` | 战斗逻辑与网络同步核心 |
+| `AShooterCharacter` | `ACharacter` + `IPlayerInterface` | 角色实体，挂载 `CombatComponent` / `HealthComponent` / `EliminationComponent` / `LagCompensationComponent` |
+| `AWeapon` | `AActor` | 武器实体：双网格、弹道、弹药、射程 / 扫掠半径、准星/弹药材质 |
+| `UCombatComponent` | `UActorComponent` | 战斗逻辑、服务器权威命中流程与网络同步核心 |
+| `ULagCompensationComponent` | `UActorComponent` | 服务端历史快照、目标回溯与服务器 Sweep 判定 |
 | `UHealthComponent` | `UActorComponent` | 生命值复制与死亡状态 |
 | `UEliminationComponent` | `UActorComponent` | 特殊淘汰判定（服务器） |
 
@@ -156,8 +156,10 @@
 | `GetMesh()` | 第三人称骨骼网格（`bOwnerNoSee`，本人不可见） |
 | `SpringArm` | 相机臂（`bUsePawnControlRotation`，长度 0，带相机滞后） |
 | `FirstPersonCamera` | 第一人称相机（`bUsePawnControlRotation=false`） |
-| `CombatComponent` / `HealthComponent` / `EliminationComponent` | 逻辑组件 |
+| `CombatComponent` / `HealthComponent` / `EliminationComponent` / `LagCompensationComponent` | 逻辑组件 |
 | `CycleWeaponAction` / `FireWeaponAction` / `ReloadWeaponAction` / `AimWeaponAction` | 角色输入 |
+
+**专用服务器 Mesh 姿态**：`BeginPlay()` 中若 `GetNetMode() == NM_DedicatedServer`，将 3P Mesh 的 `VisibilityBasedAnimTickOption` 设为 `AlwaysTickPoseAndRefreshBones`，保证服务器未渲染时骨骼姿态和 Physics Asset 碰撞仍然更新，供延迟补偿的 Mesh 命中使用。
 
 **原地转身（Turn In Place）**：`CalculateTurnInPlaceParameters()` + `TurnInPlace()`，依据控制 yaw 与瞄准旋转差的 `AO_YAW`，切换 `ETurningInPlace`（Left/Right/NotTurning）并插值归零，供动画使用。
 
@@ -176,28 +178,35 @@
 `EWeaponStatus`：`Idle` / `Firing` / `Reloading` / `Cycling` / `Unequipped`。
 `EFireType`：`Auto` / `SemiAuto`。
 
-`AWeapon` 关键属性：`WeaponTypeTag`、`Damage`、`HeadShotDamageMultiplier`、`RecoilPitch/Yaw/RecoverySpeed`、`MagCapacity`、`Ammo`、`StartingCarriedAmmo`、`FireTime`、`FireType`、`AimFOV`、`ReticleParams`、材质接口（准星/弹药图标）。
+`AWeapon` 关键属性：`WeaponTypeTag`、`Damage`、`HeadShotDamageMultiplier`、`RecoilPitch/Yaw/RecoverySpeed`、`MagCapacity`、`Ammo`、`StartingCarriedAmmo`、`FireTime`、`FireType`、`WeaponRange`、`TraceRadius`、`AimFOV`、`ReticleParams`、材质接口（准星/弹药图标）。
 
 `UWeaponData`（数据资产）：`GripPoints`（GameplayTag→挂点名）、`WeaponMontages` / `FirstPersonMontages` / `ThirdPersonMontages`、`FirstPersonAnims` / `ThirdPersonAnims`（`FPlayerAnims`、`FMontageData`）。
 
-#### 5.2.2 开火时序（客户端预测 + 服务器仲裁 + 广播）
+#### 5.2.2 开火时序（客户端预测 + 服务器权威 + 服务端回溯 + 广播）
 
 `UCombatComponent::Local_FireWeapon()`（本地，拥有者客户端）：
 
 1. 设置武器状态 `Firing`，播放 1P/3P 角色开火蒙太奇；
-2. `WeaponTrace()` 本地球形扫掠（`Sphere Sweep`：`SweepSingleByChannel` + `MakeSphere(TraceRadius)`，自定义 `ECC_Weapon`）；
+2. `AWeapon::WeaponTrace()` 本地球形扫掠（`Sphere Sweep`：`SweepSingleByChannel` + `MakeSphere(TraceRadius)`，自定义 `ECC_Weapon`，射程来自 `WeaponRange`）；
 3. `Local_Fire()` 播放特效、扣本地弹药（本地控制时）、递增 `Sequence`；
 4. 广播 `OnRoundFired`（UI 刷新），启动 `FireTimer`（射速节奏），自动武器在 `FireTimerFinished` 连发；
-5. 调用 `Server_FireWeapon(HitResult)` 上报命中结果。
+5. 调用 `Server_FireWeapon(ViewLocation, ViewDirection, ClientFireTime)` 上报开火意图，**不上报 `FHitResult`**。
 
 服务器 `Server_FireWeapon_Implementation()`：
 
 1. 校验 `CurrentWeapon` 与弹药；
 2. **反作弊**：射速校验（见 [7. 反作弊](#7-反作弊)）；
-3. 命中判定：`bValidHit = 上报命中 && IsShotDistanceValid()`，`bHeadShot = bValidHit && IsHeadShot()`；
-4. 命中则 `IPlayerInterface::Execute_DoDamage(受害者, 伤害, 攻击者)`（伤害由**服务器**用武器数值算出）；
-5. 广播 `OnRoundReported`（驱动特殊淘汰统计）；
-6. `Auth_Fire()` 扣服务器弹药；`Multicast_FireWeapon(HitResult, AuthAmmo)` 广播。
+3. 校验开火起点与服务器眼位距离、开火方向与服务器控制旋转夹角；
+4. 计算/校验 `RewindTime`：优先使用 `ClientFireTime`，限制在 `MaxRewindSeconds` 内；非法时用 `Ping / 2` 兜底；
+5. 调用 `ULagCompensationComponent::RewindTrace()`：
+   - 遍历其他存活玩家，按 `RewindTime` 查找最近历史快照；
+   - 临时将目标 `SetActorTransform` 回溯到历史位置；
+   - 使用服务器 `SweepSingleByChannel` 做命中判定；
+   - 立即恢复目标 Transform；
+6. 命中则 `IPlayerInterface::Execute_DoDamage(受害者, 伤害, 攻击者)`（伤害由**服务器**用武器数值算出）；
+7. 爆头使用服务器 Sweep 返回的 `BoneName == HeadBoneName` 判断；
+8. 广播 `OnRoundReported`（驱动特殊淘汰统计）；
+9. `Auth_Fire()` 扣服务器弹药；`Multicast_FireWeapon(HitResult, AuthAmmo)` 广播。
 
 `Multicast_FireWeapon_Implementation()`：本地控制者用 `Rep_fire(AuthAmmo)` 对账；其他客户端重放 3P 表现与角色蒙太奇。
 
@@ -293,21 +302,35 @@
 | 行为 | 权威方 | 机制 |
 |---|---|---|
 | 移动 | 服务器 | `UCharacterMovementComponent` 客户端预测 + 服务器校正 |
-| 命中判定 | **客户端** | 客户端本地 `WeaponTrace`，把 `FHitResult` 交服务器采信（客户端权威） |
+| 命中判定 | **服务器** | 客户端只上报开火起点/方向/时间；服务器回溯目标历史位置并执行 Sweep |
 | 伤害数值 | 服务器 | 服务器用自己武器的 `Damage`/`HeadShotDamageMultiplier` 计算 |
 | 血量 | 服务器 | `UHealthComponent`（`HasAuthority`） |
 | 弹药 | 服务器 | `Auth_Fire` + 客户端 `Rep_fire` 对账 |
 | 统计/淘汰 | 服务器 | `AShooterPlayerState` 复制 + Client RPC |
 | 计时（受击/重生/换弹/射速） | 服务器/动画 | 服务器侧定时器与动画通知 |
 
-> 取舍说明：本项目命中采用**客户端权威**（所见即所中、免回滚），代价是可作弊；见 [7. 反作弊](#7-反作弊) 的缓解与 [11. 路线图](#11-已知问题--todo--路线图) 的改进方向。
+> 取舍说明：命中采用**服务器权威 + 服务端回溯**（Server-Side Rewind）。客户端只提供开火意图，命中、爆头和伤害由服务器重新计算；客户端本地 Trace 只用于预测表现。
 
-### 6.2 RPC 清单
+### 6.2 服务端延迟补偿链路
+
+`ULagCompensationComponent` 挂在 `AShooterCharacter` 上，仅在服务器启用 Tick：
+
+1. **采样**：`TickGroup = TG_PostPhysics`，每服务器帧记录 `FLagCompSnapshot { TimeSeconds, ActorTransform }`；
+2. **存储**：`TDeque` 保存最近 `MaxHistorySeconds = 1s`、最多 `MaxHistorySamples = 120` 个快照；死亡/重生时清空；
+3. **开火**：服务器按 `RewindTime` 对每个目标调用 `GetSnapshotAtTime()`，取时间差最小的快照；
+4. **回溯**：保存目标当前 Transform，临时 `SetActorTransform` 到快照位置，使用与武器一致的 `TraceRadius` 做 `Sphere Sweep`；
+5. **恢复**：判定后立即恢复所有目标 Transform，避免影响服务器后续移动与碰撞；
+6. **爆头**：使用服务器 Sweep 返回的 `BoneName` 与 `HeadBoneName` 比较，不采信客户端上报；
+7. **Dedicated Server**：`BeginPlay()` 中将 3P Mesh 设为 `AlwaysTickPoseAndRefreshBones`，避免未渲染时 Physics Asset 碰撞姿态滞后。
+
+> 当前快照只回溯 `ActorTransform`，不回溯骨骼姿态；后续可扩展关键 Hitbox 快照或插值来提升肢体精度。
+
+### 6.3 RPC 清单
 
 | RPC | 方向 | 用途 |
 |---|---|---|
 | `Server_Aim(bool)` | 客户→服 | 同步瞄准状态 |
-| `Server_FireWeapon(FHitResult)` | 客户→服 | 上报命中、服务器结算 |
+| `Server_FireWeapon(FVector_NetQuantize10, FVector_NetQuantizeNormal, double)` | 客户→服 | 上报开火起点/方向/时间，服务器回溯判定 |
 | `Server_DryFire()` | 客户→服 | 空仓提示 |
 | `Server_CycleWeapon(int32)` | 客户→服 | 切枪索引 |
 | `Server_EquipWeapon(AWeapon*)` | 客户→服 | 请求装备 |
@@ -318,7 +341,7 @@
 | `Multicast_HitReact(int32)` | 服→全体 | 受击蒙太奇 |
 | `Client_ScoredElim(int32)` / `Client_SpecialElim(...)` / `Client_LostTheLead()` | 服→客 | 本人分数/特殊淘汰/失去领先 |
 
-### 6.3 复制属性与条件
+### 6.4 复制属性与条件
 
 | 组件/类 | 属性 | 条件 |
 |---|---|---|
@@ -330,24 +353,26 @@
 | `AShooterPlayerState` | `ScoredElims`/`HeadShotElims`/`Defeats`/`Hits`/`Misses`/`HighestStreak` | 全部客户端（供计分板） |
 | `AWeapon` | 弹药/状态 | **不复制**，由 RPC 驱动 |
 
-### 6.4 预测与对账
+### 6.5 预测与对账
 
-- **开火**：客户端立即表现并扣弹，服务器仲裁后 `Multicast` 回传 `AuthAmmo`，`Rep_fire` 校正。
+- **开火**：客户端立即表现并扣弹，服务器回溯判定后 `Multicast` 回传服务器 `HitResult` 与 `AuthAmmo`，`Rep_fire` 校正。
+- **命中**：客户端本地 Trace 只做预测表现；服务器按 `ClientFireTime` 回溯目标历史位置并重新做 Sweep。
+- **爆头**：服务器使用 Mesh Sweep 返回的 `BoneName` 与 `HeadBoneName` 比较。
 - **射速**：客户端 `FireTimer` 控制连发节奏；服务器 `LastFireTime` 反作弊兜底。
 - **复活**：新 Pawn 生成后延迟一帧刷新 UI，规避广播早于重绑。
 
-### 6.5 Listen 与 Dedicated 差异
+### 6.6 Listen 与 Dedicated 差异
 
 | 维度 | Listen Server | Dedicated Server |
 |---|---|---|
 | 本地玩家 | 有（主机） | 无 |
-| 渲染 | 有 | 无 → **角色网格 `VisibilityBasedAnimTickOption` 需为 `OnlyTickMontagesWhenNotRendered`**，否则换弹等「动画通知」类服务器逻辑不触发 |
+| 渲染 | 有 | 无 → **3P Mesh 使用 `AlwaysTickPoseAndRefreshBones`**，保证 Mesh / Physics Asset 碰撞姿态跟随动画；否则延迟补偿的 Mesh 命中会滞后 |
 | 分支 | `GetNetMode()==NM_ListenServer` 相关分支会命中 | 走纯远程路径 |
 | Ping | 主机自身 ≈ 0 | 无本地玩家 |
 
 > 测试提示：验证网络/联机请用 **Play As Listen Server / Standalone**；验证服务器权威逻辑用 **Play As Client（专用）**。
 
-### 6.6 玩家名字与登录流程
+### 6.7 玩家名字与登录流程
 
 1. 菜单输入名字 → 存入 `UShooterGameInstance`（跨关卡保留）。
 2. Host：`OpenLevelBySoftObjectPtr(..., "/Game/Maps/FPSMap", true, "Listen?PlayerAlias=<名>")`；Join：`OpenLevel(this, FName(IP), false, "PlayerAlias=<名>")`。
@@ -367,12 +392,14 @@
 | 项 | 实现 | 说明 |
 |---|---|---|
 | 射速 | `FireRateTolerance`（默认 0.8） | `Now - LastFireTime < FireTime * Tolerance` → 拒绝 |
-| 距离 | `IsShotDistanceValid()` | 服务器眼位到命中点 ≤ `TraceLength * ShotDistanceTolerance`（默认余量 ~20m，远大于延迟误差） |
-| 爆头 | `IsHeadShot()` | 命中组件须为受害者骨骼网格、`BoneName` 真实存在且等于 `HeadBoneName`（默认 `head`）；不直接采信客户端字符串 |
+| 开火起点 | `ViewOriginTolerance`（默认 20cm） | 客户端上报起点必须靠近服务器眼位 |
+| 开火方向 | `ViewAngleTolerance`（默认 10°） | 用单位向量点积与 `cos` 阈值比较，防止方向任意伪造 |
+| 回溯时间 | `MaxRewindSeconds`（默认 0.5s） | `ClientFireTime` 必须在窗口内；非法时用 `Ping / 2` 兜底并 Clamp |
+| 爆头 | `HeadBoneName`（默认 `head`） | 服务器 Mesh Sweep 返回的 `BoneName` 必须等于 `HeadBoneName`；不采信客户端上报 |
 | 换弹防刷 | `Notify_ReloadWeapon()` | 服务器侧仅 `Reloading` 状态执行一次装填 |
 | 权威断言 | `UHealthComponent::Change(Health/MaxHealth)ByAmount`、`AShooterCharacter::DoDamage_Implementation` | 非 `HasAuthority` 直接返回 |
 
-**残余风险**：命中仍是客户端权威；`BoneName` 由客户端上报；无服务器 LOS/回滚校验。详见路线图。
+**残余风险**：客户端仍可控制开火方向和时机，服务器只做起点/角度/时间窗口校验，不能完全防自瞄；当前快照只回溯 ActorTransform，不回溯骨骼姿态，Mesh 碰撞在动画相位不一致时仍有误差。
 
 ---
 
@@ -421,6 +448,13 @@
 | `Net PktDup=…` | 重复包 |
 
 复位：`Net PktLag=0` 等。配合 `stat net` / `stat netpackets` / `stat ping` 观察。命令作用于**敲命令的那个进程**的连接。
+
+延迟补偿调试：
+
+- `ULagCompensationComponent::bDrawDebug`：绘制服务器回溯 `SphereTrace`；
+- `AWeapon::bShowDebugSphereTrace`：绘制客户端本地武器扫掠。
+
+注意 `Net PktLag` 作用在**本进程的出站包**，只在单个客户端上设置时，表现为单向延迟；需要对称测试时使用外部网络模拟工具。
 
 ---
 
@@ -487,6 +521,7 @@ namespace FPSTraceChannels
 | `AShooterCharacter` | `Character/ShooterCharacter.h` | `Character/ShooterCharacter.cpp` |
 | `AWeapon` | `Weapon/Weapon.h` | `Weapon/Weapon.cpp` |
 | `UCombatComponent` | `Combat/CombatComponent.h` | `Combat/CombatComponent.cpp` |
+| `ULagCompensationComponent` | `Combat/LagCompensationComponent.h` | `Combat/LagCompensationComponent.cpp` |
 | `UHealthComponent` | `Attributes/HealthComponent.h` | `Attributes/HealthComponent.cpp` |
 | `UEliminationComponent` | `Elimination/EliminationComponent.h` | `Elimination/EliminationComponent.cpp` |
 | `IPlayerInterface` | `Interfaces/PlayerInterface.h` | `Interfaces/PlayerInterface.cpp` |

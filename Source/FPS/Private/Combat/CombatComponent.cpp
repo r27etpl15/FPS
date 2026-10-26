@@ -275,7 +275,7 @@ void UCombatComponent::Initiate_FireWeaponReleased()
 	bTriggerPressed = false;
 }
 
-void UCombatComponent::Server_FireWeapon_Implementation(const FVector_NetQuantize& ViewLocation,
+void UCombatComponent::Server_FireWeapon_Implementation(const FVector_NetQuantize10& ViewLocation,
 	const FVector_NetQuantizeNormal& ViewDirection, const double ClientFireTime)
 {
 	if (!IsValid(CurrentWeapon)) { return; }
@@ -444,7 +444,7 @@ void UCombatComponent::Local_FireWeapon()
 	GetWorld()->GetTimerManager().SetTimer(FireTimer, this, &ThisClass::FireTimerFinished, CurrentWeapon->GetFireTime());
 	
 	Server_FireWeapon(
-		FVector_NetQuantize(ViewLocation),
+		FVector_NetQuantize10(ViewLocation),
 		FVector_NetQuantizeNormal(ViewDirection),
 		ClientFireTime);
 }
